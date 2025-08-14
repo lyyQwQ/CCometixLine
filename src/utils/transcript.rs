@@ -28,14 +28,16 @@ pub fn parse_line_to_usage(
     let message = entry.message.as_ref()?;
     let raw_usage = message.usage.as_ref()?;
 
-    // Deduplication check
-    if let (Some(msg_id), Some(req_id)) = (&entry.message_id, &entry.request_id) {
+    // Deduplication check - match ccusage behavior exactly
+    if let (Some(msg_id), Some(req_id)) = (message.id.as_ref(), entry.request_id.as_ref()) {
+        // Use message_id:request_id when both are available
         let hash = format!("{}:{}", msg_id, req_id);
-        if !hash.is_empty() && seen.contains(&hash) {
-            return None;
+        if seen.contains(&hash) {
+            return None; // Skip duplicate
         }
         seen.insert(hash);
     }
+    // For null ID entries: don't deduplicate (matching ccusage behavior)
 
     // Normalize the usage data
     let normalized = raw_usage.clone().normalize();

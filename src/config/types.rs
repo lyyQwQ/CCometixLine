@@ -215,6 +215,8 @@ pub type Usage = RawUsage;
 
 #[derive(Deserialize)]
 pub struct Message {
+    #[serde(default)]
+    pub id: Option<String>,
     pub usage: Option<Usage>,
     pub model: Option<String>,
 }
@@ -223,9 +225,7 @@ pub struct Message {
 pub struct TranscriptEntry {
     pub r#type: Option<String>,
     pub message: Option<Message>,
-    #[serde(default)]
-    pub message_id: Option<String>,
-    #[serde(default)]
+    #[serde(default, alias = "requestId")]
     pub request_id: Option<String>,
     #[serde(default)]
     pub timestamp: Option<String>,

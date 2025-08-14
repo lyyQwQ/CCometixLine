@@ -105,15 +105,15 @@ impl ModelPricing {
     fn fallback_pricing() -> HashMap<String, ModelPricing> {
         let mut m = HashMap::new();
 
-        // Claude 4 models (no cache pricing)
+        // Claude 4 models (corrected per-token pricing)
         m.insert(
             "claude-sonnet-4-20250514".to_string(),
             ModelPricing {
                 model_name: "claude-sonnet-4-20250514".to_string(),
-                input_cost_per_1k: 3.0,   // $3/1M tokens
-                output_cost_per_1k: 15.0, // $15/1M tokens
-                cache_creation_cost_per_1k: 0.0,
-                cache_read_cost_per_1k: 0.0,
+                input_cost_per_1k: 0.003,  // $0.003/1k tokens = $3/1M tokens
+                output_cost_per_1k: 0.015, // $0.015/1k tokens = $15/1M tokens
+                cache_creation_cost_per_1k: 0.00375, // $0.00375/1k tokens = $3.75/1M tokens
+                cache_read_cost_per_1k: 0.0003, // $0.0003/1k tokens = $0.30/1M tokens
             },
         );
 
@@ -121,10 +121,10 @@ impl ModelPricing {
             "claude-opus-4-1-20250805".to_string(),
             ModelPricing {
                 model_name: "claude-opus-4-1-20250805".to_string(),
-                input_cost_per_1k: 15.0,  // $15/1M tokens
-                output_cost_per_1k: 75.0, // $75/1M tokens
-                cache_creation_cost_per_1k: 0.0,
-                cache_read_cost_per_1k: 0.0,
+                input_cost_per_1k: 0.015, // $0.015/1k tokens = $15/1M tokens
+                output_cost_per_1k: 0.075, // $0.075/1k tokens = $75/1M tokens
+                cache_creation_cost_per_1k: 0.01875, // $0.01875/1k tokens = $18.75/1M tokens
+                cache_read_cost_per_1k: 0.0015, // $0.0015/1k tokens = $1.5/1M tokens
             },
         );
 
@@ -132,22 +132,22 @@ impl ModelPricing {
             "claude-opus-4-1".to_string(),
             ModelPricing {
                 model_name: "claude-opus-4-1".to_string(),
-                input_cost_per_1k: 15.0,  // $15/1M tokens
-                output_cost_per_1k: 75.0, // $75/1M tokens
-                cache_creation_cost_per_1k: 0.0,
-                cache_read_cost_per_1k: 0.0,
+                input_cost_per_1k: 0.015, // $0.015/1k tokens = $15/1M tokens
+                output_cost_per_1k: 0.075, // $0.075/1k tokens = $75/1M tokens
+                cache_creation_cost_per_1k: 0.01875, // $0.01875/1k tokens = $18.75/1M tokens
+                cache_read_cost_per_1k: 0.0015, // $0.0015/1k tokens = $1.5/1M tokens
             },
         );
 
-        // Claude 3.5 models (with cache pricing)
+        // Claude 3.5 models (corrected per-token pricing)
         m.insert(
             "claude-3-5-sonnet-20241022".to_string(),
             ModelPricing {
                 model_name: "claude-3-5-sonnet-20241022".to_string(),
-                input_cost_per_1k: 3.0,           // $3/1M tokens
-                output_cost_per_1k: 15.0,         // $15/1M tokens
-                cache_creation_cost_per_1k: 3.75, // $3.75/1M tokens
-                cache_read_cost_per_1k: 0.3,      // $0.30/1M tokens
+                input_cost_per_1k: 0.003,  // $0.003/1k tokens = $3/1M tokens
+                output_cost_per_1k: 0.015, // $0.015/1k tokens = $15/1M tokens
+                cache_creation_cost_per_1k: 0.00375, // $0.00375/1k tokens = $3.75/1M tokens
+                cache_read_cost_per_1k: 0.0003, // $0.0003/1k tokens = $0.30/1M tokens
             },
         );
 
@@ -155,22 +155,22 @@ impl ModelPricing {
             "claude-3-5-sonnet".to_string(),
             ModelPricing {
                 model_name: "claude-3-5-sonnet".to_string(),
-                input_cost_per_1k: 3.0,           // $3/1M tokens
-                output_cost_per_1k: 15.0,         // $15/1M tokens
-                cache_creation_cost_per_1k: 3.75, // $3.75/1M tokens
-                cache_read_cost_per_1k: 0.3,      // $0.30/1M tokens
+                input_cost_per_1k: 0.003,  // $0.003/1k tokens = $3/1M tokens
+                output_cost_per_1k: 0.015, // $0.015/1k tokens = $15/1M tokens
+                cache_creation_cost_per_1k: 0.00375, // $0.00375/1k tokens = $3.75/1M tokens
+                cache_read_cost_per_1k: 0.0003, // $0.0003/1k tokens = $0.30/1M tokens
             },
         );
 
-        // Claude 3 models
+        // Claude 3 models (corrected per-token pricing)
         m.insert(
             "claude-3-opus-20240229".to_string(),
             ModelPricing {
                 model_name: "claude-3-opus-20240229".to_string(),
-                input_cost_per_1k: 15.0,           // $15/1M tokens
-                output_cost_per_1k: 75.0,          // $75/1M tokens
-                cache_creation_cost_per_1k: 18.75, // $18.75/1M tokens
-                cache_read_cost_per_1k: 1.5,       // $1.50/1M tokens
+                input_cost_per_1k: 0.015, // $0.015/1k tokens = $15/1M tokens
+                output_cost_per_1k: 0.075, // $0.075/1k tokens = $75/1M tokens
+                cache_creation_cost_per_1k: 0.01875, // $0.01875/1k tokens = $18.75/1M tokens
+                cache_read_cost_per_1k: 0.0015, // $0.0015/1k tokens = $1.50/1M tokens
             },
         );
 
@@ -178,10 +178,10 @@ impl ModelPricing {
             "claude-3-5-haiku-20241022".to_string(),
             ModelPricing {
                 model_name: "claude-3-5-haiku-20241022".to_string(),
-                input_cost_per_1k: 0.8,          // $0.80/1M tokens
-                output_cost_per_1k: 4.0,         // $4/1M tokens
-                cache_creation_cost_per_1k: 1.0, // $1/1M tokens
-                cache_read_cost_per_1k: 0.08,    // $0.08/1M tokens
+                input_cost_per_1k: 0.0008, // $0.0008/1k tokens = $0.80/1M tokens
+                output_cost_per_1k: 0.004, // $0.004/1k tokens = $4/1M tokens
+                cache_creation_cost_per_1k: 0.001, // $0.001/1k tokens = $1/1M tokens
+                cache_read_cost_per_1k: 0.00008, // $0.00008/1k tokens = $0.08/1M tokens
             },
         );
 
