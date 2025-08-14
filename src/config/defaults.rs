@@ -7,6 +7,8 @@ pub const DEFAULT_CONFIG: Config = Config {
         git: true,
         model: true,
         usage: true,
+        cost: true,
+        burn_rate: true,
     },
 };
 
@@ -19,6 +21,8 @@ impl Default for Config {
                 git: true,
                 model: true,
                 usage: true,
+                cost: true,
+                burn_rate: true,
             },
         }
     }

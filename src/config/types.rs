@@ -13,6 +13,14 @@ pub struct SegmentsConfig {
     pub git: bool,
     pub model: bool,
     pub usage: bool,
+    #[serde(default = "default_true")]
+    pub cost: bool,
+    #[serde(default = "default_true")]
+    pub burn_rate: bool,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 // Data structures compatible with existing main.rs
@@ -208,10 +216,17 @@ pub type Usage = RawUsage;
 #[derive(Deserialize)]
 pub struct Message {
     pub usage: Option<Usage>,
+    pub model: Option<String>,
 }
 
 #[derive(Deserialize)]
 pub struct TranscriptEntry {
     pub r#type: Option<String>,
     pub message: Option<Message>,
+    #[serde(default)]
+    pub message_id: Option<String>,
+    #[serde(default)]
+    pub request_id: Option<String>,
+    #[serde(default)]
+    pub timestamp: Option<String>,
 }
