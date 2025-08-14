@@ -27,7 +27,7 @@ pub struct UsageEntry {
     pub session_id: String,
 }
 
-/// 5-hour billing block
+/// 5-hour billing block with dynamic start time support
 #[derive(Debug, Clone)]
 pub struct BillingBlock {
     pub start_time: DateTime<Utc>,
@@ -37,6 +37,21 @@ pub struct BillingBlock {
     pub is_active: bool,
     pub session_count: usize,
     pub total_tokens: u32,
+    /// Source of the block start time
+    pub start_time_source: BlockStartSource,
+    /// Whether this is a gap block (no activity)
+    pub is_gap: bool,
+}
+
+/// Source of block start time
+#[derive(Debug, Clone, PartialEq)]
+pub enum BlockStartSource {
+    /// Automatically determined from first activity
+    Auto,
+    /// Manually set by user override
+    Manual,
+    /// Fixed 5-hour system (legacy mode)
+    Fixed,
 }
 
 /// Burn rate calculation

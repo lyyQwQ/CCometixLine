@@ -1,6 +1,6 @@
 use super::Segment;
 use crate::billing::{
-    block::{find_active_block, identify_session_blocks},
+    block::{find_active_block, identify_session_blocks_with_overrides},
     calculator::{calculate_daily_total, calculate_session_cost, format_remaining_time},
     ModelPricing,
 };
@@ -57,9 +57,9 @@ impl CostSegment {
         let daily_total = calculate_daily_total(&all_entries, &pricing_map);
         timings.push(("A", analyze_start.elapsed().as_millis()));
 
-        // 5. Calculate 5-hour blocks
+        // 5. Calculate dynamic blocks with override support
         let block_start = Instant::now();
-        let blocks = identify_session_blocks(&all_entries);
+        let blocks = identify_session_blocks_with_overrides(&all_entries);
         let active_block = find_active_block(&blocks);
         timings.push(("B", block_start.elapsed().as_millis()));
 
@@ -121,18 +121,19 @@ impl Segment for CostSegment {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::Workspace;
-    use std::path::PathBuf;
+    use crate::config::{Model, Workspace};
 
     #[test]
     fn test_cost_segment_disabled() {
         let segment = CostSegment::new(false);
         let input = InputData {
-            model: None,
-            workspace: Some(Workspace {
-                current_dir: PathBuf::from("/test"),
-            }),
-            transcript_path: PathBuf::from("/test/transcript.jsonl"),
+            model: Model {
+                display_name: "test-model".to_string(),
+            },
+            workspace: Workspace {
+                current_dir: "/test".to_string(),
+            },
+            transcript_path: "/test/transcript.jsonl".to_string(),
         };
 
         assert_eq!(segment.render(&input), "");

@@ -131,6 +131,31 @@ ccline --print-config
 
 # TUI 配置模式 (计划中)
 ccline --configure
+
+# 计费块管理
+ccline --set-block-start <时间>    # 设置当天计费块开始时间
+ccline --clear-block-start          # 清除计费块开始时间设置
+ccline --show-block-status          # 显示当前计费块状态
+```
+
+### 计费块同步功能
+
+解决同一账号在多设备间切换时计费块不同步的问题：
+
+```bash
+# 在设备A上设置块开始时间为上午10点
+ccline --set-block-start 10
+
+# 支持的时间格式：
+ccline --set-block-start 10        # 10:00 (24小时制)
+ccline --set-block-start 10:30     # 10:30
+ccline --set-block-start "10:30"   # 带引号也可以
+
+# 查看当前设置
+ccline --show-block-status
+
+# 清除设置，恢复自动计算
+ccline --clear-block-start
 ```
 
 ## 默认段落
@@ -162,7 +187,14 @@ ccline --configure
 实时成本追踪，显示会话、日常和计费块信息：
 - **会话成本**：当前 Claude Code 会话的成本
 - **日常总计**：今日所有会话的总成本
-- **计费块**：5小时计费周期及剩余时间
+- **计费块**：5小时计费周期及剩余时间（支持手动同步）
+
+#### 动态计费块算法
+
+采用与 ccusage 相同的双条件触发算法：
+- 自动检测活动开始时间，创建5小时计费块
+- 当活动间隔超过5小时时自动开始新块
+- 支持手动设置开始时间以在多设备间同步
 
 ### 燃烧率监控
 

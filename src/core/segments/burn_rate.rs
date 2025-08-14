@@ -1,6 +1,6 @@
 use super::Segment;
 use crate::billing::{
-    block::{find_active_block, identify_session_blocks},
+    block::{find_active_block, identify_session_blocks_with_overrides},
     calculator::calculate_burn_rate,
     BurnRateThresholds, ModelPricing,
 };
@@ -31,7 +31,7 @@ impl BurnRateSegment {
     }
 
     fn render_with_data(&self, _input: &InputData) -> String {
-        // Load all project data
+        // Load all project data globally (like ccusage does)
         let data_loader = DataLoader::new();
         let mut all_entries = data_loader.load_all_projects();
 
@@ -48,8 +48,8 @@ impl BurnRateSegment {
             }
         }
 
-        // Find active billing block
-        let blocks = identify_session_blocks(&all_entries);
+        // Find active billing block using dynamic calculation
+        let blocks = identify_session_blocks_with_overrides(&all_entries);
         let active_block = find_active_block(&blocks);
 
         // Calculate burn rate
@@ -84,18 +84,19 @@ impl Segment for BurnRateSegment {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::Workspace;
-    use std::path::PathBuf;
+    use crate::config::{Model, Workspace};
 
     #[test]
     fn test_burn_rate_segment_disabled() {
         let segment = BurnRateSegment::new(false);
         let input = InputData {
-            model: None,
-            workspace: Some(Workspace {
-                current_dir: PathBuf::from("/test"),
-            }),
-            transcript_path: PathBuf::from("/test/transcript.jsonl"),
+            model: Model {
+                display_name: "test-model".to_string(),
+            },
+            workspace: Workspace {
+                current_dir: "/test".to_string(),
+            },
+            transcript_path: "/test/transcript.jsonl".to_string(),
         };
 
         assert_eq!(segment.render(&input), "");
