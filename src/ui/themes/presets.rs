@@ -213,7 +213,7 @@ impl ThemePresets {
     fn cost_segment() -> SegmentConfig {
         SegmentConfig {
             id: SegmentId::Cost,
-            enabled: true,
+            enabled: false,
             icon: IconConfig {
                 plain: "💰".to_string(),
                 nerd_font: "\u{efc8}".to_string(), // Money bill wave icon
@@ -231,7 +231,7 @@ impl ThemePresets {
     fn burn_rate_segment() -> SegmentConfig {
         SegmentConfig {
             id: SegmentId::BurnRate,
-            enabled: true,
+            enabled: false,
             icon: IconConfig {
                 plain: "🔥".to_string(),
                 nerd_font: "\u{f06d}".to_string(), // Fire icon
@@ -380,7 +380,7 @@ impl ThemePresets {
     fn minimal_cost_segment() -> SegmentConfig {
         SegmentConfig {
             id: SegmentId::Cost,
-            enabled: true,
+            enabled: false,
             icon: IconConfig {
                 plain: "$".to_string(),
                 nerd_font: "\u{efc8}".to_string(), // Money bill wave
@@ -398,7 +398,7 @@ impl ThemePresets {
     fn minimal_burn_rate_segment() -> SegmentConfig {
         SegmentConfig {
             id: SegmentId::BurnRate,
-            enabled: true,
+            enabled: false,
             icon: IconConfig {
                 plain: "≈".to_string(),
                 nerd_font: "\u{f06d}".to_string(), // Fire
@@ -493,7 +493,7 @@ impl ThemePresets {
     fn gruvbox_cost_segment() -> SegmentConfig {
         SegmentConfig {
             id: SegmentId::Cost,
-            enabled: true,
+            enabled: false,
             icon: IconConfig {
                 plain: "💰".to_string(),
                 nerd_font: "\u{efc8}".to_string(), // Money bill wave
@@ -511,7 +511,7 @@ impl ThemePresets {
     fn gruvbox_burn_rate_segment() -> SegmentConfig {
         SegmentConfig {
             id: SegmentId::BurnRate,
-            enabled: true,
+            enabled: false,
             icon: IconConfig {
                 plain: "🔥".to_string(),
                 nerd_font: "\u{f06d}".to_string(), // Fire
@@ -654,7 +654,7 @@ impl ThemePresets {
     fn nord_cost_segment() -> SegmentConfig {
         SegmentConfig {
             id: SegmentId::Cost,
-            enabled: true,
+            enabled: false,
             icon: IconConfig {
                 plain: "💰".to_string(),
                 nerd_font: "\u{efc8}".to_string(), // Money bill wave
@@ -684,7 +684,7 @@ impl ThemePresets {
     fn nord_burn_rate_segment() -> SegmentConfig {
         SegmentConfig {
             id: SegmentId::BurnRate,
-            enabled: true,
+            enabled: false,
             icon: IconConfig {
                 plain: "🔥".to_string(),
                 nerd_font: "\u{f06d}".to_string(), // Fire
@@ -857,7 +857,7 @@ impl ThemePresets {
     fn powerline_dark_cost_segment() -> SegmentConfig {
         SegmentConfig {
             id: SegmentId::Cost,
-            enabled: true,
+            enabled: false,
             icon: IconConfig {
                 plain: "💰".to_string(),
                 nerd_font: "\u{efc8}".to_string(), // Money bill wave
@@ -887,7 +887,7 @@ impl ThemePresets {
     fn powerline_dark_burn_rate_segment() -> SegmentConfig {
         SegmentConfig {
             id: SegmentId::BurnRate,
-            enabled: true,
+            enabled: false,
             icon: IconConfig {
                 plain: "🔥".to_string(),
                 nerd_font: "\u{f06d}".to_string(), // Fire
@@ -1048,7 +1048,7 @@ impl ThemePresets {
     fn powerline_light_cost_segment() -> SegmentConfig {
         SegmentConfig {
             id: SegmentId::Cost,
-            enabled: true,
+            enabled: false,
             icon: IconConfig {
                 plain: "💰".to_string(),
                 nerd_font: "\u{efc8}".to_string(), // Money bill wave
@@ -1070,7 +1070,7 @@ impl ThemePresets {
     fn powerline_light_burn_rate_segment() -> SegmentConfig {
         SegmentConfig {
             id: SegmentId::BurnRate,
-            enabled: true,
+            enabled: false,
             icon: IconConfig {
                 plain: "🔥".to_string(),
                 nerd_font: "\u{f06d}".to_string(), // Fire
@@ -1243,7 +1243,7 @@ impl ThemePresets {
     fn powerline_rose_pine_cost_segment() -> SegmentConfig {
         SegmentConfig {
             id: SegmentId::Cost,
-            enabled: true,
+            enabled: false,
             icon: IconConfig {
                 plain: "💰".to_string(),
                 nerd_font: "\u{efc8}".to_string(), // Money bill wave
@@ -1273,7 +1273,7 @@ impl ThemePresets {
     fn powerline_rose_pine_burn_rate_segment() -> SegmentConfig {
         SegmentConfig {
             id: SegmentId::BurnRate,
-            enabled: true,
+            enabled: false,
             icon: IconConfig {
                 plain: "🔥".to_string(),
                 nerd_font: "\u{f06d}".to_string(), // Fire
@@ -1446,7 +1446,7 @@ impl ThemePresets {
     fn powerline_tokyo_night_cost_segment() -> SegmentConfig {
         SegmentConfig {
             id: SegmentId::Cost,
-            enabled: true,
+            enabled: false,
             icon: IconConfig {
                 plain: "💰".to_string(),
                 nerd_font: "\u{efc8}".to_string(), // Money bill wave
@@ -1476,7 +1476,7 @@ impl ThemePresets {
     fn powerline_tokyo_night_burn_rate_segment() -> SegmentConfig {
         SegmentConfig {
             id: SegmentId::BurnRate,
-            enabled: true,
+            enabled: false,
             icon: IconConfig {
                 plain: "🔥".to_string(),
                 nerd_font: "\u{f06d}".to_string(), // Fire

@@ -19,8 +19,8 @@ The statusline shows: Model | Directory | Git Branch Status | Usage | Cost Stati
 - **Git integration** with branch, status, and tracking info  
 - **Model display** with simplified Claude model names
 - **Usage tracking** based on transcript analysis
-- **Cost tracking** with session, daily, and billing block statistics
-- **Burn rate monitoring** for real-time consumption patterns
+- **Cost tracking** with session, daily, and billing block statistics (disabled by default)
+- **Burn rate monitoring** for real-time consumption patterns (disabled by default)
 - **Directory display** showing current workspace
 - **Minimal design** using Nerd Font icons
 - **Simple configuration** via command line options
@@ -201,7 +201,9 @@ ccline --clear-block-start
 
 ## Default Segments
 
-Displays: `Model | Directory | Git Branch Status | Usage | Cost Statistics | Burn Rate`
+Displays: `Model | Directory | Git Branch Status | Usage`
+
+Note: Cost Statistics and Burn Rate segments are available but disabled by default for optimal performance.
 
 ### Model Display
 
@@ -223,35 +225,51 @@ Shows current workspace directory with folder icon.
 
 Token usage percentage based on transcript analysis with context limit tracking.
 
-### Cost Statistics
+### Cost Statistics and Burn Rate (Disabled by Default)
 
-Real-time cost tracking with session, daily, and billing block information:
+CCometixLine includes advanced cost tracking and burn rate monitoring features. These are **disabled by default** for optimal performance.
+
+#### Enabling Cost Features
+
+To enable cost tracking and burn rate monitoring:
+
+1. **Using TUI Configuration** (Recommended):
+   ```bash
+   ccline --config
+   # Navigate to Cost and BurnRate segments
+   # Press Enter to enable each segment
+   # Press 's' to save configuration
+   ```
+
+2. **Manual Configuration**:
+   Edit `~/.claude/ccline/config.toml` and set:
+   ```toml
+   [[segments]]
+   id = "cost"
+   enabled = true
+   
+   [[segments]]
+   id = "burn_rate"
+   enabled = true
+   ```
+
+#### What These Features Provide
+
+**Cost Statistics**:
 - **Session cost**: Cost for current Claude Code session
 - **Daily total**: Total cost for today across all sessions
-- **Billing blocks**: 5-hour billing periods with remaining time (supports manual sync)
+- **Billing blocks**: 5-hour billing periods with remaining time
+- Dynamic billing block algorithm with automatic activity detection
+- Manual start time setting for multi-device synchronization
 
-#### Dynamic Billing Block Algorithm
-
-Uses the same dual-condition triggering algorithm as ccusage:
-- Automatically detects activity start time to create 5-hour billing blocks
-- Starts new block when activity gap exceeds 5 hours
-- Supports manual start time setting for multi-device synchronization
-
-### Burn Rate Monitoring
-
-Real-time token consumption rate with visual indicators:
+**Burn Rate Monitoring**:
+- Real-time token consumption rate with visual indicators
 - 🔥 High burn rate (>5000 tokens/min)
 - ⚡ Medium burn rate (2000-5000 tokens/min)
 - 📊 Normal burn rate (<2000 tokens/min)
 - Shows cost per hour projection
 
 ## Environment Variables
-
-### Cost Feature Control
-
-- `CCLINE_DISABLE_COST=1` - Disable both cost statistics and burn rate monitoring
-  - When set: Shows only core segments (Model | Directory | Git | Usage)
-  - When unset: Shows all segments including cost tracking
 
 ### Performance Tuning
 
