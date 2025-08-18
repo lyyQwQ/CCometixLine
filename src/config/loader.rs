@@ -66,6 +66,8 @@ impl ConfigLoader {
     pub fn ensure_themes_exist() {
         // Silently ensure themes exist without printing output
         let _ = Self::init_themes_silent();
+        // Migrate existing theme files if needed
+        let _ = Self::migrate_all_themes();
     }
 
     /// Initialize themes directory and create built-in theme files (silent mode)
@@ -98,6 +100,87 @@ impl ConfigLoader {
 
         Ok(())
     }
+
+    /// Migrate theme file if it's missing new segments
+    pub fn migrate_theme_if_needed(theme_path: &Path) -> Result<bool, Box<dyn std::error::Error>> {
+        if !theme_path.exists() {
+            return Ok(false);
+        }
+
+        let content = fs::read_to_string(theme_path)?;
+        let mut config: Config = toml::from_str(&content)?;
+
+        // Check if Cost and BurnRate segments exist
+        let has_cost = config
+            .segments
+            .iter()
+            .any(|s| s.id == crate::config::SegmentId::Cost);
+        let has_burn_rate = config
+            .segments
+            .iter()
+            .any(|s| s.id == crate::config::SegmentId::BurnRate);
+
+        if has_cost && has_burn_rate {
+            return Ok(false); // No migration needed
+        }
+
+        // Get the theme name from the file name
+        let theme_name = theme_path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("default");
+
+        // Get the complete theme configuration from presets
+        let complete_theme = crate::ui::themes::ThemePresets::get_theme(theme_name);
+
+        // Add missing segments
+        if !has_cost {
+            if let Some(cost_segment) = complete_theme
+                .segments
+                .iter()
+                .find(|s| s.id == crate::config::SegmentId::Cost)
+            {
+                config.segments.push(cost_segment.clone());
+            }
+        }
+
+        if !has_burn_rate {
+            if let Some(burn_rate_segment) = complete_theme
+                .segments
+                .iter()
+                .find(|s| s.id == crate::config::SegmentId::BurnRate)
+            {
+                config.segments.push(burn_rate_segment.clone());
+            }
+        }
+
+        // Save the migrated configuration
+        let content = toml::to_string_pretty(&config)?;
+        fs::write(theme_path, content)?;
+
+        Ok(true) // Migration performed
+    }
+
+    /// Migrate all theme files in the themes directory
+    pub fn migrate_all_themes() -> Result<u32, Box<dyn std::error::Error>> {
+        let themes_dir = Self::get_themes_path();
+        let mut migrated_count = 0;
+
+        if let Ok(entries) = fs::read_dir(&themes_dir) {
+            for entry in entries.flatten() {
+                if let Some(name) = entry.file_name().to_str() {
+                    if name.ends_with(".toml") {
+                        let theme_path = entry.path();
+                        if Self::migrate_theme_if_needed(&theme_path)? {
+                            migrated_count += 1;
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(migrated_count)
+    }
 }
 
 impl Config {
@@ -113,8 +196,58 @@ impl Config {
         }
 
         let content = fs::read_to_string(config_path)?;
-        let config: Config = toml::from_str(&content)?;
+        let mut config: Config = toml::from_str(&content)?;
+
+        // Migrate config if needed
+        if Self::migrate_config_if_needed(&mut config)? {
+            // Save the migrated config
+            config.save()?;
+        }
+
         Ok(config)
+    }
+
+    /// Migrate config to add missing segments
+    fn migrate_config_if_needed(config: &mut Config) -> Result<bool, Box<dyn std::error::Error>> {
+        // Check if Cost and BurnRate segments exist
+        let has_cost = config
+            .segments
+            .iter()
+            .any(|s| s.id == crate::config::SegmentId::Cost);
+        let has_burn_rate = config
+            .segments
+            .iter()
+            .any(|s| s.id == crate::config::SegmentId::BurnRate);
+
+        if has_cost && has_burn_rate {
+            return Ok(false); // No migration needed
+        }
+
+        // Get the default theme configuration to get the missing segments
+        let default_config = crate::ui::themes::ThemePresets::get_default();
+
+        // Add missing segments
+        if !has_cost {
+            if let Some(cost_segment) = default_config
+                .segments
+                .iter()
+                .find(|s| s.id == crate::config::SegmentId::Cost)
+            {
+                config.segments.push(cost_segment.clone());
+            }
+        }
+
+        if !has_burn_rate {
+            if let Some(burn_rate_segment) = default_config
+                .segments
+                .iter()
+                .find(|s| s.id == crate::config::SegmentId::BurnRate)
+            {
+                config.segments.push(burn_rate_segment.clone());
+            }
+        }
+
+        Ok(!has_cost || !has_burn_rate) // Return true if migration was performed
     }
 
     /// Save configuration to default location
