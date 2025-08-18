@@ -438,6 +438,10 @@ fn get_plain_icons() -> Vec<IconInfo> {
             icon: "◄",
             name: "Left Triangle",
         },
+        IconInfo {
+            icon: "💰",
+            name: "Money (Cost)",
+        },
     ]
 }
 
@@ -522,6 +526,18 @@ fn get_nerd_font_icons() -> Vec<IconInfo> {
         IconInfo {
             icon: "\u{f31b}",
             name: "Github",
+        },
+        IconInfo {
+            icon: "\u{efc8}",
+            name: "Money Bill Wave (Cost)",
+        },
+        IconInfo {
+            icon: "\u{f0d6}",
+            name: "Money Bill (Cost)",
+        },
+        IconInfo {
+            icon: "\u{f06d}",
+            name: "Fire (Burn Rate)",
         },
     ]
 }

@@ -216,7 +216,7 @@ impl ThemePresets {
             enabled: true,
             icon: IconConfig {
                 plain: "💰".to_string(),
-                nerd_font: "\u{f155}".to_string(), // Dollar sign icon
+                nerd_font: "\u{efc8}".to_string(), // Money bill wave icon
             },
             colors: ColorConfig {
                 icon: Some(AnsiColor::Color16 { c16: 11 }), // Yellow
@@ -234,7 +234,7 @@ impl ThemePresets {
             enabled: true,
             icon: IconConfig {
                 plain: "🔥".to_string(),
-                nerd_font: "\u{f0e4}".to_string(), // Dashboard/gauge icon
+                nerd_font: "\u{f06d}".to_string(), // Fire icon
             },
             colors: ColorConfig {
                 icon: Some(AnsiColor::Color16 { c16: 9 }), // Red
@@ -257,6 +257,8 @@ impl ThemePresets {
                 Self::minimal_directory_segment(),
                 Self::minimal_git_segment(),
                 Self::minimal_usage_segment(),
+                Self::minimal_cost_segment(),
+                Self::minimal_burn_rate_segment(),
             ],
             theme: "minimal".to_string(),
         }
@@ -273,6 +275,8 @@ impl ThemePresets {
                 Self::gruvbox_directory_segment(),
                 Self::gruvbox_git_segment(),
                 Self::gruvbox_usage_segment(),
+                Self::gruvbox_cost_segment(),
+                Self::gruvbox_burn_rate_segment(),
             ],
             theme: "gruvbox".to_string(),
         }
@@ -289,6 +293,8 @@ impl ThemePresets {
                 Self::nord_directory_segment(),
                 Self::nord_git_segment(),
                 Self::nord_usage_segment(),
+                Self::nord_cost_segment(),
+                Self::nord_burn_rate_segment(),
             ],
             theme: "nord".to_string(),
         }
@@ -371,6 +377,42 @@ impl ThemePresets {
         }
     }
 
+    fn minimal_cost_segment() -> SegmentConfig {
+        SegmentConfig {
+            id: SegmentId::Cost,
+            enabled: true,
+            icon: IconConfig {
+                plain: "$".to_string(),
+                nerd_font: "\u{efc8}".to_string(), // Money bill wave
+            },
+            colors: ColorConfig {
+                icon: Some(AnsiColor::Color16 { c16: 7 }), // White
+                text: Some(AnsiColor::Color16 { c16: 7 }),
+                background: None,
+            },
+            styles: TextStyleConfig::default(),
+            options: HashMap::new(),
+        }
+    }
+
+    fn minimal_burn_rate_segment() -> SegmentConfig {
+        SegmentConfig {
+            id: SegmentId::BurnRate,
+            enabled: true,
+            icon: IconConfig {
+                plain: "≈".to_string(),
+                nerd_font: "\u{f06d}".to_string(), // Fire
+            },
+            colors: ColorConfig {
+                icon: Some(AnsiColor::Color16 { c16: 8 }), // Gray
+                text: Some(AnsiColor::Color16 { c16: 8 }),
+                background: None,
+            },
+            styles: TextStyleConfig::default(),
+            options: HashMap::new(),
+        }
+    }
+
     // Gruvbox theme segments
     fn gruvbox_model_segment() -> SegmentConfig {
         SegmentConfig {
@@ -441,6 +483,42 @@ impl ThemePresets {
             colors: ColorConfig {
                 icon: Some(AnsiColor::Color16 { c16: 5 }),
                 text: Some(AnsiColor::Color16 { c16: 5 }),
+                background: None,
+            },
+            styles: TextStyleConfig { text_bold: true },
+            options: HashMap::new(),
+        }
+    }
+
+    fn gruvbox_cost_segment() -> SegmentConfig {
+        SegmentConfig {
+            id: SegmentId::Cost,
+            enabled: true,
+            icon: IconConfig {
+                plain: "💰".to_string(),
+                nerd_font: "\u{efc8}".to_string(), // Money bill wave
+            },
+            colors: ColorConfig {
+                icon: Some(AnsiColor::Color16 { c16: 11 }), // Yellow
+                text: Some(AnsiColor::Color16 { c16: 11 }),
+                background: None,
+            },
+            styles: TextStyleConfig { text_bold: true },
+            options: HashMap::new(),
+        }
+    }
+
+    fn gruvbox_burn_rate_segment() -> SegmentConfig {
+        SegmentConfig {
+            id: SegmentId::BurnRate,
+            enabled: true,
+            icon: IconConfig {
+                plain: "🔥".to_string(),
+                nerd_font: "\u{f06d}".to_string(), // Fire
+            },
+            colors: ColorConfig {
+                icon: Some(AnsiColor::Color16 { c16: 9 }), // Light Red
+                text: Some(AnsiColor::Color16 { c16: 9 }),
                 background: None,
             },
             styles: TextStyleConfig { text_bold: true },
@@ -573,6 +651,66 @@ impl ThemePresets {
         }
     }
 
+    fn nord_cost_segment() -> SegmentConfig {
+        SegmentConfig {
+            id: SegmentId::Cost,
+            enabled: true,
+            icon: IconConfig {
+                plain: "💰".to_string(),
+                nerd_font: "\u{efc8}".to_string(), // Money bill wave
+            },
+            colors: ColorConfig {
+                icon: Some(AnsiColor::Rgb {
+                    r: 235,
+                    g: 203,
+                    b: 139,
+                }), // Nord warm yellow
+                text: Some(AnsiColor::Rgb {
+                    r: 235,
+                    g: 203,
+                    b: 139,
+                }),
+                background: Some(AnsiColor::Rgb {
+                    r: 67,
+                    g: 76,
+                    b: 94,
+                }),
+            },
+            styles: TextStyleConfig::default(),
+            options: HashMap::new(),
+        }
+    }
+
+    fn nord_burn_rate_segment() -> SegmentConfig {
+        SegmentConfig {
+            id: SegmentId::BurnRate,
+            enabled: true,
+            icon: IconConfig {
+                plain: "🔥".to_string(),
+                nerd_font: "\u{f06d}".to_string(), // Fire
+            },
+            colors: ColorConfig {
+                icon: Some(AnsiColor::Rgb {
+                    r: 191,
+                    g: 97,
+                    b: 106,
+                }), // Nord warm red
+                text: Some(AnsiColor::Rgb {
+                    r: 191,
+                    g: 97,
+                    b: 106,
+                }),
+                background: Some(AnsiColor::Rgb {
+                    r: 59,
+                    g: 66,
+                    b: 82,
+                }),
+            },
+            styles: TextStyleConfig::default(),
+            options: HashMap::new(),
+        }
+    }
+
     // Powerline Dark theme
     pub fn get_powerline_dark() -> Config {
         Config {
@@ -585,6 +723,8 @@ impl ThemePresets {
                 Self::powerline_dark_directory_segment(),
                 Self::powerline_dark_git_segment(),
                 Self::powerline_dark_usage_segment(),
+                Self::powerline_dark_cost_segment(),
+                Self::powerline_dark_burn_rate_segment(),
             ],
             theme: "powerline-dark".to_string(),
         }
@@ -714,6 +854,62 @@ impl ThemePresets {
         }
     }
 
+    fn powerline_dark_cost_segment() -> SegmentConfig {
+        SegmentConfig {
+            id: SegmentId::Cost,
+            enabled: true,
+            icon: IconConfig {
+                plain: "💰".to_string(),
+                nerd_font: "\u{efc8}".to_string(), // Money bill wave
+            },
+            colors: ColorConfig {
+                icon: Some(AnsiColor::Rgb {
+                    r: 255,
+                    g: 255,
+                    b: 255,
+                }),
+                text: Some(AnsiColor::Rgb {
+                    r: 255,
+                    g: 255,
+                    b: 255,
+                }),
+                background: Some(AnsiColor::Rgb {
+                    r: 139,
+                    g: 69,
+                    b: 19,
+                }), // Dark brown/saddle brown
+            },
+            styles: TextStyleConfig::default(),
+            options: HashMap::new(),
+        }
+    }
+
+    fn powerline_dark_burn_rate_segment() -> SegmentConfig {
+        SegmentConfig {
+            id: SegmentId::BurnRate,
+            enabled: true,
+            icon: IconConfig {
+                plain: "🔥".to_string(),
+                nerd_font: "\u{f06d}".to_string(), // Fire
+            },
+            colors: ColorConfig {
+                icon: Some(AnsiColor::Rgb {
+                    r: 255,
+                    g: 255,
+                    b: 255,
+                }),
+                text: Some(AnsiColor::Rgb {
+                    r: 255,
+                    g: 255,
+                    b: 255,
+                }),
+                background: Some(AnsiColor::Rgb { r: 139, g: 0, b: 0 }), // Dark red
+            },
+            styles: TextStyleConfig::default(),
+            options: HashMap::new(),
+        }
+    }
+
     // Powerline Light theme
     pub fn get_powerline_light() -> Config {
         Config {
@@ -726,6 +922,8 @@ impl ThemePresets {
                 Self::powerline_light_directory_segment(),
                 Self::powerline_light_git_segment(),
                 Self::powerline_light_usage_segment(),
+                Self::powerline_light_cost_segment(),
+                Self::powerline_light_burn_rate_segment(),
             ],
             theme: "powerline-light".to_string(),
         }
@@ -847,6 +1045,58 @@ impl ThemePresets {
         }
     }
 
+    fn powerline_light_cost_segment() -> SegmentConfig {
+        SegmentConfig {
+            id: SegmentId::Cost,
+            enabled: true,
+            icon: IconConfig {
+                plain: "💰".to_string(),
+                nerd_font: "\u{efc8}".to_string(), // Money bill wave
+            },
+            colors: ColorConfig {
+                icon: Some(AnsiColor::Rgb { r: 0, g: 0, b: 0 }), // Black
+                text: Some(AnsiColor::Rgb { r: 0, g: 0, b: 0 }),
+                background: Some(AnsiColor::Rgb {
+                    r: 255,
+                    g: 215,
+                    b: 0,
+                }), // Gold
+            },
+            styles: TextStyleConfig::default(),
+            options: HashMap::new(),
+        }
+    }
+
+    fn powerline_light_burn_rate_segment() -> SegmentConfig {
+        SegmentConfig {
+            id: SegmentId::BurnRate,
+            enabled: true,
+            icon: IconConfig {
+                plain: "🔥".to_string(),
+                nerd_font: "\u{f06d}".to_string(), // Fire
+            },
+            colors: ColorConfig {
+                icon: Some(AnsiColor::Rgb {
+                    r: 255,
+                    g: 255,
+                    b: 255,
+                }), // White
+                text: Some(AnsiColor::Rgb {
+                    r: 255,
+                    g: 255,
+                    b: 255,
+                }),
+                background: Some(AnsiColor::Rgb {
+                    r: 255,
+                    g: 69,
+                    b: 0,
+                }), // Orange Red
+            },
+            styles: TextStyleConfig::default(),
+            options: HashMap::new(),
+        }
+    }
+
     // Powerline Rose Pine theme
     pub fn get_powerline_rose_pine() -> Config {
         Config {
@@ -859,6 +1109,8 @@ impl ThemePresets {
                 Self::powerline_rose_pine_directory_segment(),
                 Self::powerline_rose_pine_git_segment(),
                 Self::powerline_rose_pine_usage_segment(),
+                Self::powerline_rose_pine_cost_segment(),
+                Self::powerline_rose_pine_burn_rate_segment(),
             ],
             theme: "powerline-rose-pine".to_string(),
         }
@@ -988,6 +1240,66 @@ impl ThemePresets {
         }
     }
 
+    fn powerline_rose_pine_cost_segment() -> SegmentConfig {
+        SegmentConfig {
+            id: SegmentId::Cost,
+            enabled: true,
+            icon: IconConfig {
+                plain: "💰".to_string(),
+                nerd_font: "\u{efc8}".to_string(), // Money bill wave
+            },
+            colors: ColorConfig {
+                icon: Some(AnsiColor::Rgb {
+                    r: 246,
+                    g: 193,
+                    b: 119,
+                }), // Rose Pine Gold
+                text: Some(AnsiColor::Rgb {
+                    r: 246,
+                    g: 193,
+                    b: 119,
+                }),
+                background: Some(AnsiColor::Rgb {
+                    r: 33,
+                    g: 32,
+                    b: 46,
+                }),
+            },
+            styles: TextStyleConfig::default(),
+            options: HashMap::new(),
+        }
+    }
+
+    fn powerline_rose_pine_burn_rate_segment() -> SegmentConfig {
+        SegmentConfig {
+            id: SegmentId::BurnRate,
+            enabled: true,
+            icon: IconConfig {
+                plain: "🔥".to_string(),
+                nerd_font: "\u{f06d}".to_string(), // Fire
+            },
+            colors: ColorConfig {
+                icon: Some(AnsiColor::Rgb {
+                    r: 235,
+                    g: 111,
+                    b: 146,
+                }), // Rose Pine Love
+                text: Some(AnsiColor::Rgb {
+                    r: 235,
+                    g: 111,
+                    b: 146,
+                }),
+                background: Some(AnsiColor::Rgb {
+                    r: 38,
+                    g: 35,
+                    b: 58,
+                }),
+            },
+            styles: TextStyleConfig::default(),
+            options: HashMap::new(),
+        }
+    }
+
     // Powerline Tokyo Night theme
     pub fn get_powerline_tokyo_night() -> Config {
         Config {
@@ -1000,6 +1312,8 @@ impl ThemePresets {
                 Self::powerline_tokyo_night_directory_segment(),
                 Self::powerline_tokyo_night_git_segment(),
                 Self::powerline_tokyo_night_usage_segment(),
+                Self::powerline_tokyo_night_cost_segment(),
+                Self::powerline_tokyo_night_burn_rate_segment(),
             ],
             theme: "powerline-tokyo-night".to_string(),
         }
@@ -1122,6 +1436,66 @@ impl ThemePresets {
                     r: 61,
                     g: 89,
                     b: 161,
+                }),
+            },
+            styles: TextStyleConfig::default(),
+            options: HashMap::new(),
+        }
+    }
+
+    fn powerline_tokyo_night_cost_segment() -> SegmentConfig {
+        SegmentConfig {
+            id: SegmentId::Cost,
+            enabled: true,
+            icon: IconConfig {
+                plain: "💰".to_string(),
+                nerd_font: "\u{efc8}".to_string(), // Money bill wave
+            },
+            colors: ColorConfig {
+                icon: Some(AnsiColor::Rgb {
+                    r: 224,
+                    g: 175,
+                    b: 104,
+                }), // Tokyo Night Yellow
+                text: Some(AnsiColor::Rgb {
+                    r: 224,
+                    g: 175,
+                    b: 104,
+                }),
+                background: Some(AnsiColor::Rgb {
+                    r: 30,
+                    g: 32,
+                    b: 48,
+                }),
+            },
+            styles: TextStyleConfig::default(),
+            options: HashMap::new(),
+        }
+    }
+
+    fn powerline_tokyo_night_burn_rate_segment() -> SegmentConfig {
+        SegmentConfig {
+            id: SegmentId::BurnRate,
+            enabled: true,
+            icon: IconConfig {
+                plain: "🔥".to_string(),
+                nerd_font: "\u{f06d}".to_string(), // Fire
+            },
+            colors: ColorConfig {
+                icon: Some(AnsiColor::Rgb {
+                    r: 247,
+                    g: 118,
+                    b: 142,
+                }), // Tokyo Night Red
+                text: Some(AnsiColor::Rgb {
+                    r: 247,
+                    g: 118,
+                    b: 142,
+                }),
+                background: Some(AnsiColor::Rgb {
+                    r: 36,
+                    g: 40,
+                    b: 59,
                 }),
             },
             styles: TextStyleConfig::default(),
