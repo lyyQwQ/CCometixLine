@@ -33,14 +33,12 @@ impl BurnRateSegment {
 
     fn collect_with_data(&self, _input: &InputData) -> SegmentData {
         // Load all project data globally (like ccusage does)
-        let data_loader = DataLoader::new();
+        let mut data_loader = DataLoader::new();
         let mut all_entries = data_loader.load_all_projects();
 
-        // Get pricing data (create a runtime to handle async)
-        let pricing_map = {
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            rt.block_on(async { ModelPricing::get_pricing_with_fallback().await })
-        };
+        // Get pricing data (use global runtime to handle async)
+        let pricing_map =
+            crate::utils::block_on(async { ModelPricing::get_pricing_with_fallback().await });
 
         // Calculate costs for entries
         for entry in &mut all_entries {

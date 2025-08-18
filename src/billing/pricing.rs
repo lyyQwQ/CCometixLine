@@ -1,6 +1,9 @@
+use chrono::{DateTime, Utc};
 use once_cell::sync::Lazy;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs;
+use std::path::PathBuf;
 use std::sync::RwLock;
 
 use super::ModelPricing;
@@ -9,9 +12,83 @@ use super::ModelPricing;
 const LITELLM_PRICING_URL: &str =
     "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json";
 
-/// Pricing data cache
-static PRICING_CACHE: Lazy<RwLock<Option<HashMap<String, ModelPricing>>>> =
-    Lazy::new(|| RwLock::new(None));
+/// Memory cache TTL in seconds (5 minutes)
+const MEMORY_CACHE_TTL_SECONDS: i64 = 300;
+
+/// File cache TTL in seconds (24 hours)
+const FILE_CACHE_TTL_SECONDS: i64 = 86400;
+
+/// Pricing cache file path
+fn get_cache_file_path() -> PathBuf {
+    dirs::home_dir()
+        .unwrap_or_else(|| PathBuf::from("."))
+        .join(".claude")
+        .join("ccline")
+        .join("pricing_cache.json")
+}
+
+/// Cached pricing data with timestamp (for memory cache)
+struct CachedPricing {
+    data: HashMap<String, ModelPricing>,
+    fetched_at: DateTime<Utc>,
+}
+
+impl CachedPricing {
+    fn is_expired(&self) -> bool {
+        let age = Utc::now() - self.fetched_at;
+        age.num_seconds() > MEMORY_CACHE_TTL_SECONDS
+    }
+}
+
+/// File cache structure with metadata
+#[derive(Debug, Serialize, Deserialize)]
+struct FileCachePricing {
+    fetched_at: DateTime<Utc>,
+    ttl_hours: u32,
+    data: HashMap<String, ModelPricing>,
+}
+
+impl FileCachePricing {
+    fn is_expired(&self) -> bool {
+        let age = Utc::now() - self.fetched_at;
+        age.num_seconds() > FILE_CACHE_TTL_SECONDS
+    }
+
+    /// Load pricing data from file cache
+    fn load_from_file() -> Option<Self> {
+        let cache_path = get_cache_file_path();
+        if !cache_path.exists() {
+            return None;
+        }
+
+        let content = fs::read_to_string(&cache_path).ok()?;
+        let cache: FileCachePricing = serde_json::from_str(&content).ok()?;
+
+        if cache.is_expired() {
+            return None;
+        }
+
+        Some(cache)
+    }
+
+    /// Save pricing data to file cache
+    fn save_to_file(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let cache_path = get_cache_file_path();
+
+        // Ensure parent directory exists
+        if let Some(parent) = cache_path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+
+        let content = serde_json::to_string_pretty(self)?;
+        fs::write(&cache_path, content)?;
+
+        Ok(())
+    }
+}
+
+/// Pricing data cache with TTL
+static PRICING_CACHE: Lazy<RwLock<Option<CachedPricing>>> = Lazy::new(|| RwLock::new(None));
 
 /// LiteLLM data format
 #[derive(Debug, Clone, Deserialize)]
@@ -26,15 +103,28 @@ pub struct LiteLLMPricing {
 }
 
 impl ModelPricing {
-    /// Fetch pricing data from LiteLLM (with caching)
+    /// Fetch pricing data with three-tier caching (memory -> file -> network)
     pub async fn fetch_pricing() -> Result<HashMap<String, ModelPricing>, Box<dyn std::error::Error>>
     {
-        // Check cache first
+        // Tier 1: Check memory cache first
         if let Some(cached) = PRICING_CACHE.read().unwrap().as_ref() {
-            return Ok(cached.clone());
+            if !cached.is_expired() {
+                return Ok(cached.data.clone());
+            }
         }
 
-        // Fetch latest data
+        // Tier 2: Check file cache
+        if let Some(file_cache) = FileCachePricing::load_from_file() {
+            // Update memory cache from file
+            let pricing = file_cache.data.clone();
+            *PRICING_CACHE.write().unwrap() = Some(CachedPricing {
+                data: pricing.clone(),
+                fetched_at: file_cache.fetched_at,
+            });
+            return Ok(pricing);
+        }
+
+        // Tier 3: Fetch from network
         let response = reqwest::get(LITELLM_PRICING_URL).await?;
         let data: HashMap<String, LiteLLMPricing> = response.json().await?;
 
@@ -86,8 +176,24 @@ impl ModelPricing {
             );
         }
 
-        // Update cache
-        *PRICING_CACHE.write().unwrap() = Some(pricing.clone());
+        let now = Utc::now();
+
+        // Save to file cache
+        let file_cache = FileCachePricing {
+            fetched_at: now,
+            ttl_hours: 24,
+            data: pricing.clone(),
+        };
+
+        if let Err(e) = file_cache.save_to_file() {
+            eprintln!("Warning: Failed to save pricing cache to file: {}", e);
+        }
+
+        // Update memory cache
+        *PRICING_CACHE.write().unwrap() = Some(CachedPricing {
+            data: pricing.clone(),
+            fetched_at: now,
+        });
 
         Ok(pricing)
     }

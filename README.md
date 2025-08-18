@@ -205,6 +205,17 @@ Displays: `Model | Directory | Git Branch Status | Usage`
 
 Note: Cost Statistics and Burn Rate segments are available but disabled by default for optimal performance.
 
+### Performance Debugging
+
+Enable timing statistics for the Cost segment to analyze performance:
+
+```bash
+# Show timing breakdown for each step (L=Load, P=Pricing, C=Calculate, A=Analyze, B=Block)
+export CCLINE_SHOW_TIMING=1
+
+# Output example: $0.50 session · $2.30 today [182ms: L120|P2|C30|A20|B10]
+```
+
 ### Model Display
 
 Shows simplified Claude model names:

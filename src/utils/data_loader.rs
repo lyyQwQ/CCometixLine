@@ -2,7 +2,7 @@ use crate::billing::UsageEntry;
 use glob::glob;
 use std::collections::HashSet;
 use std::fs;
-use std::io::{Read, Seek, SeekFrom};
+use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 
 pub struct DataLoader {
@@ -48,8 +48,8 @@ impl DataLoader {
         dirs
     }
 
-    /// Load all usage data from all projects (fresh read every time)
-    pub fn load_all_projects(&self) -> Vec<UsageEntry> {
+    /// Load all usage data from all projects (optimized serial version)
+    pub fn load_all_projects(&mut self) -> Vec<UsageEntry> {
         let mut all_entries = Vec::new();
         let mut seen_hashes = HashSet::new();
 
@@ -58,8 +58,16 @@ impl DataLoader {
             let pattern = format!("{}/**/*.jsonl", dir.display());
             if let Ok(paths) = glob(&pattern) {
                 for path in paths.flatten() {
-                    // Parse individual file
-                    let entries = self.parse_jsonl_file(&path, &mut seen_hashes);
+                    // Extract session_id from filename
+                    let session_id = path
+                        .file_stem()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or("unknown")
+                        .to_string();
+
+                    // Parse the file using optimized method
+                    let entries =
+                        self.parse_jsonl_file_optimized(&path, &session_id, &mut seen_hashes);
                     all_entries.extend(entries);
                 }
             }
@@ -71,36 +79,28 @@ impl DataLoader {
         all_entries
     }
 
-    /// Parse a single JSONL file
-    fn parse_jsonl_file(&self, path: &Path, seen: &mut HashSet<String>) -> Vec<UsageEntry> {
+    /// Parse a single JSONL file with optimizations
+    fn parse_jsonl_file_optimized(
+        &self,
+        path: &Path,
+        session_id: &str,
+        seen: &mut HashSet<String>,
+    ) -> Vec<UsageEntry> {
         let mut entries = Vec::new();
 
-        // Extract session_id from filename (UUID)
-        let session_id = path
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("unknown")
-            .to_string();
-
-        // Read file content (handle large files)
-        let content = match fs::metadata(path) {
-            Ok(metadata) if metadata.len() > 100 * 1024 * 1024 => {
-                // File > 100MB, only read last 10MB
-                self.read_last_n_bytes(path, 10 * 1024 * 1024)
-            }
-            _ => fs::read_to_string(path).unwrap_or_default(),
+        // Skip if file doesn't exist or can't be opened
+        let file = match fs::File::open(path) {
+            Ok(f) => f,
+            Err(_) => return entries,
         };
 
-        // Parse each line
-        for line in content.lines() {
+        // Use buffered reader for all files
+        let reader = BufReader::new(file);
+        for line in reader.lines().map_while(Result::ok) {
             if line.trim().is_empty() {
                 continue;
             }
-
-            // Parse transcript entry and extract usage
-            if let Some(usage_entry) =
-                crate::utils::transcript::parse_line_to_usage(line, &session_id, seen)
-            {
+            if let Some(usage_entry) = self.parse_line_optimized(&line, session_id, seen) {
                 entries.push(usage_entry);
             }
         }
@@ -108,34 +108,46 @@ impl DataLoader {
         entries
     }
 
-    /// Read the last N bytes of a file
-    fn read_last_n_bytes(&self, path: &Path, n: usize) -> String {
-        let mut file = match fs::File::open(path) {
-            Ok(f) => f,
-            Err(_) => return String::new(),
-        };
+    /// Parse a line with optimized JSON parsing
+    fn parse_line_optimized(
+        &self,
+        line: &str,
+        session_id: &str,
+        seen: &mut HashSet<String>,
+    ) -> Option<UsageEntry> {
+        // Parse the JSON line using sonic-rs for better performance
+        let entry: crate::config::TranscriptEntry = sonic_rs::from_str(line).ok()?;
 
-        let file_len = match file.metadata() {
-            Ok(m) => m.len(),
-            Err(_) => return String::new(),
-        };
-
-        let start_pos = file_len.saturating_sub(n as u64);
-
-        // Seek to start position
-        if file.seek(SeekFrom::Start(start_pos)).is_err() {
-            return String::new();
+        // Only process assistant messages with usage data
+        if entry.r#type.as_deref() != Some("assistant") {
+            return None;
         }
 
-        let mut buffer = Vec::new();
-        let _ = file.read_to_end(&mut buffer);
+        let message = entry.message.as_ref()?;
+        let raw_usage = message.usage.as_ref()?;
 
-        // Find first complete line (skip partial line at beginning)
-        if let Some(pos) = buffer.iter().position(|&b| b == b'\n') {
-            buffer.drain(..=pos);
+        // Deduplication check
+        if let (Some(msg_id), Some(req_id)) = (message.id.as_ref(), entry.request_id.as_ref()) {
+            let hash = format!("{}:{}", msg_id, req_id);
+            if seen.contains(&hash) {
+                return None; // Skip duplicate
+            }
+            seen.insert(hash);
         }
 
-        String::from_utf8_lossy(&buffer).to_string()
+        // Normalize the usage data
+        let normalized = raw_usage.clone().normalize();
+
+        // Get model name from message
+        let model = message.model.as_deref();
+
+        // Convert to UsageEntry
+        crate::utils::transcript::extract_usage_entry(
+            &normalized,
+            session_id,
+            entry.timestamp.as_deref(),
+            model,
+        )
     }
 }
 

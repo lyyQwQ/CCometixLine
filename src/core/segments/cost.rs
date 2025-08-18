@@ -29,16 +29,14 @@ impl CostSegment {
 
         // 1. Load all project data
         let load_start = Instant::now();
-        let data_loader = DataLoader::new();
+        let mut data_loader = DataLoader::new();
         let mut all_entries = data_loader.load_all_projects();
         timings.push(("L", load_start.elapsed().as_millis()));
 
-        // 2. Get pricing data (create a runtime to handle async)
+        // 2. Get pricing data (use global runtime to handle async)
         let pricing_start = Instant::now();
-        let pricing_map = {
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            rt.block_on(async { ModelPricing::get_pricing_with_fallback().await })
-        };
+        let pricing_map =
+            crate::utils::block_on(async { ModelPricing::get_pricing_with_fallback().await });
         timings.push(("P", pricing_start.elapsed().as_millis()));
 
         // 3. Calculate costs for all entries
@@ -117,6 +115,7 @@ impl CostSegment {
 
 impl Segment for CostSegment {
     fn collect(&self, input: &InputData) -> Option<SegmentData> {
+        // Fast path: skip all expensive operations when disabled
         if !self.enabled {
             return None;
         }
