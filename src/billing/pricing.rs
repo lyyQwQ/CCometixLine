@@ -78,10 +78,13 @@ impl ModelPricing {
             }
         }
 
-        eprintln!(
-            "LiteLLM: Fetched {} total models, {} Claude models, {} with valid pricing",
-            total_models, claude_models, valid_claude_models
-        );
+        // Only show debug info if CCLINE_DEBUG is set
+        if std::env::var("CCLINE_DEBUG").is_ok() {
+            eprintln!(
+                "LiteLLM: Fetched {} total models, {} Claude models, {} with valid pricing",
+                total_models, claude_models, valid_claude_models
+            );
+        }
 
         // Update cache
         *PRICING_CACHE.write().unwrap() = Some(pricing.clone());

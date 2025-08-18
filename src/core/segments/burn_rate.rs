@@ -1,11 +1,12 @@
-use super::Segment;
+use super::{Segment, SegmentData};
 use crate::billing::{
     block::{find_active_block, identify_session_blocks_with_overrides},
     calculator::calculate_burn_rate,
     BurnRateThresholds, ModelPricing,
 };
-use crate::config::InputData;
+use crate::config::{InputData, SegmentId};
 use crate::utils::data_loader::DataLoader;
+use std::collections::HashMap;
 
 pub struct BurnRateSegment {
     enabled: bool,
@@ -30,7 +31,7 @@ impl BurnRateSegment {
         }
     }
 
-    fn render_with_data(&self, _input: &InputData) -> String {
+    fn collect_with_data(&self, _input: &InputData) -> SegmentData {
         // Load all project data globally (like ccusage does)
         let data_loader = DataLoader::new();
         let mut all_entries = data_loader.load_all_projects();
@@ -53,31 +54,65 @@ impl BurnRateSegment {
         let active_block = find_active_block(&blocks);
 
         // Calculate burn rate
-        match active_block.and_then(|block| calculate_burn_rate(block, &all_entries)) {
-            Some(rate) => {
-                let indicator = self.get_indicator(rate.tokens_per_minute_for_indicator);
-                format!("{} ${:.2}/hr", indicator, rate.cost_per_hour)
-            }
-            None => "\u{f0e4} —/hr".to_string(), // No data available
+        let mut metadata = HashMap::new();
+
+        let (primary, secondary) =
+            match active_block.and_then(|block| calculate_burn_rate(block, &all_entries)) {
+                Some(rate) => {
+                    let indicator = self.get_indicator(rate.tokens_per_minute_for_indicator);
+                    metadata.insert(
+                        "cost_per_hour".to_string(),
+                        format!("{:.2}", rate.cost_per_hour),
+                    );
+                    metadata.insert(
+                        "tokens_per_minute".to_string(),
+                        format!("{:.1}", rate.tokens_per_minute_for_indicator),
+                    );
+                    metadata.insert("trend".to_string(), format!("{:?}", rate.trend));
+
+                    (
+                        format!("${:.2}/hr", rate.cost_per_hour),
+                        indicator.to_string(),
+                    )
+                }
+                None => {
+                    metadata.insert("status".to_string(), "no_data".to_string());
+                    ("—/hr".to_string(), "\u{f0e4}".to_string())
+                }
+            };
+
+        SegmentData {
+            primary,
+            secondary,
+            metadata,
         }
     }
 }
 
 impl Segment for BurnRateSegment {
-    fn render(&self, input: &InputData) -> String {
+    fn collect(&self, input: &InputData) -> Option<SegmentData> {
         if !self.enabled {
-            return String::new();
+            return None;
         }
 
         // Handle potential errors gracefully
-        match std::panic::catch_unwind(|| self.render_with_data(input)) {
-            Ok(result) => result,
-            Err(_) => "\u{f0e4} —/hr".to_string(), // Error fallback
+        match std::panic::catch_unwind(|| self.collect_with_data(input)) {
+            Ok(result) => Some(result),
+            Err(_) => {
+                let mut metadata = HashMap::new();
+                metadata.insert("error".to_string(), "true".to_string());
+
+                Some(SegmentData {
+                    primary: "—/hr".to_string(),
+                    secondary: "\u{f0e4}".to_string(),
+                    metadata,
+                })
+            }
         }
     }
 
-    fn enabled(&self) -> bool {
-        self.enabled
+    fn id(&self) -> SegmentId {
+        SegmentId::BurnRate
     }
 }
 
@@ -99,14 +134,24 @@ mod tests {
             transcript_path: "/test/transcript.jsonl".to_string(),
         };
 
-        assert_eq!(segment.render(&input), "");
-        assert!(!segment.enabled());
+        assert!(segment.collect(&input).is_none());
     }
 
     #[test]
     fn test_burn_rate_segment_enabled() {
         let segment = BurnRateSegment::new(true);
-        assert!(segment.enabled());
+        let input = InputData {
+            model: Model {
+                display_name: "test-model".to_string(),
+            },
+            workspace: Workspace {
+                current_dir: "/test".to_string(),
+            },
+            transcript_path: "/test/transcript.jsonl".to_string(),
+        };
+
+        // Should return Some data when enabled
+        assert!(segment.collect(&input).is_some());
     }
 
     #[test]

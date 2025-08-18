@@ -1,30 +1,11 @@
-use super::types::{Config, SegmentsConfig};
+// Legacy defaults - now using ui/themes/presets.rs for configuration
+// This file kept for backward compatibility
 
-pub const DEFAULT_CONFIG: Config = Config {
-    theme: String::new(), // Set to "dark" at runtime
-    segments: SegmentsConfig {
-        directory: true,
-        git: true,
-        model: true,
-        usage: true,
-        cost: true,
-        burn_rate: true,
-    },
-};
+use super::types::Config;
 
 impl Default for Config {
     fn default() -> Self {
-        let cost_features_enabled = std::env::var("CCLINE_DISABLE_COST").is_err();
-        Config {
-            theme: "dark".to_string(),
-            segments: SegmentsConfig {
-                directory: true,
-                git: true,
-                model: true,
-                usage: true,
-                cost: cost_features_enabled,
-                burn_rate: cost_features_enabled,
-            },
-        }
+        // Use the theme presets as the source of truth
+        crate::ui::themes::ThemePresets::get_default()
     }
 }

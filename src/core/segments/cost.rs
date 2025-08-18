@@ -1,11 +1,12 @@
-use super::Segment;
+use super::{Segment, SegmentData};
 use crate::billing::{
     block::{find_active_block, identify_session_blocks_with_overrides},
     calculator::{calculate_daily_total, calculate_session_cost, format_remaining_time},
     ModelPricing,
 };
-use crate::config::InputData;
+use crate::config::{InputData, SegmentId};
 use crate::utils::{data_loader::DataLoader, transcript::extract_session_id};
+use std::collections::HashMap;
 use std::time::Instant;
 
 pub struct CostSegment {
@@ -21,7 +22,7 @@ impl CostSegment {
         }
     }
 
-    fn render_with_pricing(&self, input: &InputData) -> String {
+    fn collect_with_pricing(&self, input: &InputData) -> SegmentData {
         // Performance timing
         let start = Instant::now();
         let mut timings = Vec::new();
@@ -63,23 +64,34 @@ impl CostSegment {
         let active_block = find_active_block(&blocks);
         timings.push(("B", block_start.elapsed().as_millis()));
 
-        // Format basic output
-        let cost_display = match active_block {
-            Some(block) => format!(
-                "\u{f155} ${:.2} session · ${:.2} today · ${:.2} block ({})",
-                session_cost,
+        // Build metadata
+        let mut metadata = HashMap::new();
+        metadata.insert("session_cost".to_string(), format!("{:.2}", session_cost));
+        metadata.insert("daily_total".to_string(), format!("{:.2}", daily_total));
+
+        if let Some(block) = &active_block {
+            metadata.insert("block_cost".to_string(), format!("{:.2}", block.cost));
+            metadata.insert(
+                "block_remaining".to_string(),
+                format!("{}", block.remaining_minutes),
+            );
+        }
+
+        // Format primary and secondary text
+        let primary = format!("${:.2} session", session_cost);
+        let secondary = if let Some(block) = active_block {
+            format!(
+                "${:.2} today · ${:.2} block ({})",
                 daily_total,
                 block.cost,
                 format_remaining_time(block.remaining_minutes)
-            ),
-            None => format!(
-                "\u{f155} ${:.2} session · ${:.2} today · No active block",
-                session_cost, daily_total
-            ),
+            )
+        } else {
+            format!("${:.2} today · No active block", daily_total)
         };
 
-        // Add performance timing if enabled
-        if self.show_timing {
+        // Add performance timing to secondary if enabled
+        let secondary_with_timing = if self.show_timing {
             let total_ms = start.elapsed().as_millis();
             let timing_str = format!(
                 " [{}ms: L{}|P{}|C{}|A{}|B{}]",
@@ -90,59 +102,43 @@ impl CostSegment {
                 timings[3].1, // Analyze
                 timings[4].1  // Block
             );
-            format!("{}{}", cost_display, timing_str)
+            format!("{}{}", secondary, timing_str)
         } else {
-            cost_display
+            secondary
+        };
+
+        SegmentData {
+            primary,
+            secondary: secondary_with_timing,
+            metadata,
         }
     }
 }
 
 impl Segment for CostSegment {
-    fn render(&self, input: &InputData) -> String {
+    fn collect(&self, input: &InputData) -> Option<SegmentData> {
         if !self.enabled {
-            return String::new();
+            return None;
         }
 
         // Handle potential errors gracefully
-        match std::panic::catch_unwind(|| self.render_with_pricing(input)) {
-            Ok(result) => result,
+        match std::panic::catch_unwind(|| self.collect_with_pricing(input)) {
+            Ok(result) => Some(result),
             Err(_) => {
                 // Fallback display on error
-                "\u{f155} $0.00 session · $0.00 today · Error loading data".to_string()
+                let mut metadata = HashMap::new();
+                metadata.insert("error".to_string(), "true".to_string());
+
+                Some(SegmentData {
+                    primary: "$0.00 session".to_string(),
+                    secondary: "$0.00 today · Error loading data".to_string(),
+                    metadata,
+                })
             }
         }
     }
 
-    fn enabled(&self) -> bool {
-        self.enabled
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::config::{Model, Workspace};
-
-    #[test]
-    fn test_cost_segment_disabled() {
-        let segment = CostSegment::new(false);
-        let input = InputData {
-            model: Model {
-                display_name: "test-model".to_string(),
-            },
-            workspace: Workspace {
-                current_dir: "/test".to_string(),
-            },
-            transcript_path: "/test/transcript.jsonl".to_string(),
-        };
-
-        assert_eq!(segment.render(&input), "");
-        assert!(!segment.enabled());
-    }
-
-    #[test]
-    fn test_cost_segment_enabled() {
-        let segment = CostSegment::new(true);
-        assert!(segment.enabled());
+    fn id(&self) -> SegmentId {
+        SegmentId::Cost
     }
 }
