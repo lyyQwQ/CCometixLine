@@ -5,7 +5,7 @@ use crate::billing::{
     BurnRateThresholds, ModelPricing,
 };
 use crate::config::{InputData, SegmentId};
-use crate::utils::data_loader::DataLoader;
+use crate::utils::{data_loader::DataLoader, data_loader_fast::FastDataLoader};
 use std::collections::HashMap;
 
 pub struct BurnRateSegment {
@@ -33,8 +33,15 @@ impl BurnRateSegment {
 
     fn collect_with_data(&self, _input: &InputData) -> SegmentData {
         // Load all project data globally (like ccusage does)
-        let mut data_loader = DataLoader::new();
-        let mut all_entries = data_loader.load_all_projects();
+        let mut all_entries = if std::env::var("CCLINE_FAST_LOADER").is_ok() {
+            // Use optimized fast loader
+            let mut fast_loader = FastDataLoader::new();
+            fast_loader.load_all_projects()
+        } else {
+            // Use original loader
+            let mut data_loader = DataLoader::new();
+            data_loader.load_all_projects()
+        };
 
         // Get pricing data (use global runtime to handle async)
         let pricing_map =
