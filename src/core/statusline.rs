@@ -406,11 +406,11 @@ pub fn collect_all_segments(
                 segment.collect(input)
             }
             crate::config::SegmentId::Cost => {
-                let segment = CostSegment::new(segment_config.enabled);
+                let segment = CostSegment::new(segment_config);
                 segment.collect(input)
             }
             crate::config::SegmentId::BurnRate => {
-                let segment = BurnRateSegment::new(segment_config.enabled);
+                let segment = BurnRateSegment::new(segment_config);
                 segment.collect(input)
             }
         };

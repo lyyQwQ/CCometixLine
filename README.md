@@ -209,12 +209,23 @@ Note: Cost Statistics and Burn Rate segments are available but disabled by defau
 
 Enable timing statistics for the Cost segment to analyze performance:
 
+**Option 1: Using TUI** (Recommended)
 ```bash
-# Show timing breakdown for each step (L=Load, P=Pricing, C=Calculate, A=Analyze, B=Block)
-export CCLINE_SHOW_TIMING=1
-
-# Output example: $0.50 session · $2.30 today [182ms: L120|P2|C30|A20|B10]
+ccline --config
+# Navigate to Cost segment → Tab to Settings → Select Options → Enter
+# Toggle 'show_timing' to enable
 ```
+
+**Option 2: Edit config file**
+```toml
+# In ~/.claude/ccline/config.toml
+[[segments]]
+id = "cost"
+[segments.options]
+show_timing = true  # Shows timing breakdown (L=Load, P=Pricing, C=Calculate, A=Analyze, B=Block)
+```
+
+Output example: `$0.50 session · $2.30 today [182ms: L120|P2|C30|A20|B10]`
 
 ### Model Display
 
@@ -280,15 +291,34 @@ To enable cost tracking and burn rate monitoring:
 - 📊 Normal burn rate (<2000 tokens/min)
 - Shows cost per hour projection
 
-## Environment Variables
+#### Advanced Configuration
 
-### Performance Tuning
+The Cost and BurnRate segments support additional options in `~/.claude/ccline/config.toml`:
 
-- `CCLINE_SHOW_TIMING=1` - Display performance timing information for debugging
+```toml
+[[segments]]
+id = "cost"
+enabled = true
+
+[segments.options]
+show_timing = false  # Show performance timing breakdown (default: false)
+fast_loader = true   # Use optimized parallel file loader (default: true)
+
+[[segments]]
+id = "burn_rate"  
+enabled = true
+
+[segments.options]
+fast_loader = true   # Use optimized parallel file loader (default: true)
+```
+
+**Performance Options**:
+- `show_timing`: When enabled, displays timing breakdown for each processing step (L=Load, P=Pricing, C=Calculate, A=Analyze, B=Block)
+- `fast_loader`: Uses parallel I/O and memory-mapped files for 4x faster loading (recommended for large usage histories)
 
 ## Configuration
 
-Configuration support is planned for future releases. Currently uses sensible defaults for all segments.
+Configuration is managed through `~/.claude/ccline/config.toml`. Use the TUI (`ccline --tui`) for visual configuration or edit the file directly.
 
 ## Performance
 

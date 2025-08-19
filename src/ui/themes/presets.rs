@@ -224,7 +224,12 @@ impl ThemePresets {
                 background: None,
             },
             styles: TextStyleConfig::default(),
-            options: HashMap::new(),
+            options: {
+                let mut opts = HashMap::new();
+                opts.insert("show_timing".to_string(), serde_json::json!(false));
+                opts.insert("fast_loader".to_string(), serde_json::json!(true));
+                opts
+            },
         }
     }
 
@@ -242,7 +247,11 @@ impl ThemePresets {
                 background: None,
             },
             styles: TextStyleConfig::default(),
-            options: HashMap::new(),
+            options: {
+                let mut opts = HashMap::new();
+                opts.insert("fast_loader".to_string(), serde_json::json!(true));
+                opts
+            },
         }
     }
 

@@ -4,20 +4,26 @@ use crate::billing::{
     calculator::calculate_burn_rate,
     BurnRateThresholds, ModelPricing,
 };
-use crate::config::{InputData, SegmentId};
+use crate::config::{InputData, SegmentConfig, SegmentId};
 use crate::utils::{data_loader::DataLoader, data_loader_fast::FastDataLoader};
 use std::collections::HashMap;
 
 pub struct BurnRateSegment {
     enabled: bool,
     thresholds: BurnRateThresholds,
+    use_fast_loader: bool,
 }
 
 impl BurnRateSegment {
-    pub fn new(enabled: bool) -> Self {
+    pub fn new(config: &SegmentConfig) -> Self {
         Self {
-            enabled,
+            enabled: config.enabled,
             thresholds: BurnRateThresholds::from_env(),
+            use_fast_loader: config
+                .options
+                .get("fast_loader")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(true),
         }
     }
 
@@ -33,7 +39,7 @@ impl BurnRateSegment {
 
     fn collect_with_data(&self, _input: &InputData) -> SegmentData {
         // Load all project data globally (like ccusage does)
-        let mut all_entries = if std::env::var("CCLINE_FAST_LOADER").is_ok() {
+        let mut all_entries = if self.use_fast_loader {
             // Use optimized fast loader
             let mut fast_loader = FastDataLoader::new();
             fast_loader.load_all_projects()

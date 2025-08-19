@@ -101,7 +101,7 @@ impl ConfigLoader {
         Ok(())
     }
 
-    /// Migrate theme file if it's missing new segments
+    /// Migrate theme file if it's missing new segments or options
     pub fn migrate_theme_if_needed(theme_path: &Path) -> Result<bool, Box<dyn std::error::Error>> {
         if !theme_path.exists() {
             return Ok(false);
@@ -109,8 +109,40 @@ impl ConfigLoader {
 
         let content = fs::read_to_string(theme_path)?;
         let mut config: Config = toml::from_str(&content)?;
+        let mut needs_migration = false;
 
-        // Check if Cost and BurnRate segments exist
+        // First, add missing options to existing segments
+        for segment in &mut config.segments {
+            match segment.id {
+                crate::config::SegmentId::Cost => {
+                    // Add missing options for Cost segment
+                    if !segment.options.contains_key("show_timing") {
+                        segment
+                            .options
+                            .insert("show_timing".to_string(), serde_json::json!(false));
+                        needs_migration = true;
+                    }
+                    if !segment.options.contains_key("fast_loader") {
+                        segment
+                            .options
+                            .insert("fast_loader".to_string(), serde_json::json!(true));
+                        needs_migration = true;
+                    }
+                }
+                crate::config::SegmentId::BurnRate => {
+                    // Add missing options for BurnRate segment
+                    if !segment.options.contains_key("fast_loader") {
+                        segment
+                            .options
+                            .insert("fast_loader".to_string(), serde_json::json!(true));
+                        needs_migration = true;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        // Then check if segments exist at all
         let has_cost = config
             .segments
             .iter()
@@ -119,10 +151,6 @@ impl ConfigLoader {
             .segments
             .iter()
             .any(|s| s.id == crate::config::SegmentId::BurnRate);
-
-        if has_cost && has_burn_rate {
-            return Ok(false); // No migration needed
-        }
 
         // Get the theme name from the file name
         let theme_name = theme_path
@@ -133,7 +161,7 @@ impl ConfigLoader {
         // Get the complete theme configuration from presets
         let complete_theme = crate::ui::themes::ThemePresets::get_theme(theme_name);
 
-        // Add missing segments
+        // Add missing segments (they will already have the correct options from the preset)
         if !has_cost {
             if let Some(cost_segment) = complete_theme
                 .segments
@@ -141,6 +169,7 @@ impl ConfigLoader {
                 .find(|s| s.id == crate::config::SegmentId::Cost)
             {
                 config.segments.push(cost_segment.clone());
+                needs_migration = true;
             }
         }
 
@@ -151,14 +180,17 @@ impl ConfigLoader {
                 .find(|s| s.id == crate::config::SegmentId::BurnRate)
             {
                 config.segments.push(burn_rate_segment.clone());
+                needs_migration = true;
             }
         }
 
-        // Save the migrated configuration
-        let content = toml::to_string_pretty(&config)?;
-        fs::write(theme_path, content)?;
+        // Only save if migration was needed
+        if needs_migration {
+            let content = toml::to_string_pretty(&config)?;
+            fs::write(theme_path, content)?;
+        }
 
-        Ok(true) // Migration performed
+        Ok(needs_migration)
     }
 
     /// Migrate all theme files in the themes directory
@@ -207,9 +239,42 @@ impl Config {
         Ok(config)
     }
 
-    /// Migrate config to add missing segments
+    /// Migrate config to add missing segments and options
     fn migrate_config_if_needed(config: &mut Config) -> Result<bool, Box<dyn std::error::Error>> {
-        // Check if Cost and BurnRate segments exist
+        let mut needs_migration = false;
+
+        // First, add missing options to existing segments
+        for segment in &mut config.segments {
+            match segment.id {
+                crate::config::SegmentId::Cost => {
+                    // Add missing options for Cost segment
+                    if !segment.options.contains_key("show_timing") {
+                        segment
+                            .options
+                            .insert("show_timing".to_string(), serde_json::json!(false));
+                        needs_migration = true;
+                    }
+                    if !segment.options.contains_key("fast_loader") {
+                        segment
+                            .options
+                            .insert("fast_loader".to_string(), serde_json::json!(true));
+                        needs_migration = true;
+                    }
+                }
+                crate::config::SegmentId::BurnRate => {
+                    // Add missing options for BurnRate segment
+                    if !segment.options.contains_key("fast_loader") {
+                        segment
+                            .options
+                            .insert("fast_loader".to_string(), serde_json::json!(true));
+                        needs_migration = true;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        // Then check if segments exist at all
         let has_cost = config
             .segments
             .iter()
@@ -219,14 +284,10 @@ impl Config {
             .iter()
             .any(|s| s.id == crate::config::SegmentId::BurnRate);
 
-        if has_cost && has_burn_rate {
-            return Ok(false); // No migration needed
-        }
-
         // Get the default theme configuration to get the missing segments
         let default_config = crate::ui::themes::ThemePresets::get_default();
 
-        // Add missing segments
+        // Add missing segments (they will already have the correct options from the default)
         if !has_cost {
             if let Some(cost_segment) = default_config
                 .segments
@@ -234,6 +295,7 @@ impl Config {
                 .find(|s| s.id == crate::config::SegmentId::Cost)
             {
                 config.segments.push(cost_segment.clone());
+                needs_migration = true;
             }
         }
 
@@ -244,10 +306,11 @@ impl Config {
                 .find(|s| s.id == crate::config::SegmentId::BurnRate)
             {
                 config.segments.push(burn_rate_segment.clone());
+                needs_migration = true;
             }
         }
 
-        Ok(!has_cost || !has_burn_rate) // Return true if migration was performed
+        Ok(needs_migration)
     }
 
     /// Save configuration to default location

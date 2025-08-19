@@ -4,6 +4,7 @@ use crate::ui::components::{
     help::HelpComponent,
     icon_selector::IconSelectorComponent,
     name_input::NameInputComponent,
+    options_editor::OptionsEditorComponent,
     preview::PreviewComponent,
     segment_list::{FieldSelection, Panel, SegmentListComponent},
     separator_editor::SeparatorEditorComponent,
@@ -33,6 +34,7 @@ pub struct App {
     color_picker: ColorPickerComponent,
     icon_selector: IconSelectorComponent,
     name_input: NameInputComponent,
+    options_editor: OptionsEditorComponent,
     preview: PreviewComponent,
     segment_list: SegmentListComponent,
     separator_editor: SeparatorEditorComponent,
@@ -53,6 +55,7 @@ impl App {
             color_picker: ColorPickerComponent::new(),
             icon_selector: IconSelectorComponent::new(),
             name_input: NameInputComponent::new(),
+            options_editor: OptionsEditorComponent::new(),
             preview: PreviewComponent::new(),
             segment_list: SegmentListComponent::new(),
             separator_editor: SeparatorEditorComponent::new(),
@@ -177,6 +180,29 @@ impl App {
                         }
                         KeyCode::Backspace if app.icon_selector.editing_custom => {
                             app.icon_selector.backspace();
+                        }
+                        _ => {}
+                    }
+                } else if app.options_editor.is_open {
+                    // Handle options editor events
+                    match key.code {
+                        KeyCode::Esc => {
+                            app.options_editor.close();
+                            app.status_message = Some("Exited options editor".to_string());
+                        }
+                        KeyCode::Up => app.options_editor.move_selection(-1),
+                        KeyCode::Down => app.options_editor.move_selection(1),
+                        KeyCode::Enter | KeyCode::Char(' ') => {
+                            if let Some((key, value)) = app.options_editor.toggle_current() {
+                                // Update the config with the new value
+                                if let Some(segment) =
+                                    app.config.segments.get_mut(app.selected_segment)
+                                {
+                                    segment.options.insert(key.clone(), value.clone());
+                                    app.status_message = Some(format!("{} toggled", key));
+                                    app.preview.update_preview(&app.config);
+                                }
+                            }
                         }
                         _ => {}
                     }
@@ -395,8 +421,8 @@ impl App {
             f,
             layout[4],
             self.status_message.as_deref(),
-            self.color_picker.is_open,
-            self.icon_selector.is_open,
+            self.color_picker.is_open || self.icon_selector.is_open || self.options_editor.is_open,
+            false, // Keep the original signature for now
         );
 
         // Render popups on top
@@ -411,6 +437,9 @@ impl App {
         }
         if self.separator_editor.is_open {
             self.separator_editor.render(f, f.area());
+        }
+        if self.options_editor.is_open {
+            self.options_editor.render(f, f.area());
         }
     }
 
@@ -518,9 +547,13 @@ impl App {
                         }
                     }
                     FieldSelection::Options => {
-                        // TODO: Implement options editor
-                        self.status_message =
-                            Some("Options editor not implemented yet".to_string());
+                        // Open options editor popup
+                        if let Some(segment) = self.config.segments.get(self.selected_segment) {
+                            self.options_editor.open(segment);
+                            self.status_message = Some(
+                                "Editing options - use Space to toggle, Esc to exit".to_string(),
+                            );
+                        }
                     }
                 }
             }

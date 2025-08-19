@@ -4,7 +4,7 @@ use crate::billing::{
     calculator::{calculate_daily_total, calculate_session_cost, format_remaining_time},
     ModelPricing,
 };
-use crate::config::{InputData, SegmentId};
+use crate::config::{InputData, SegmentConfig, SegmentId};
 use crate::utils::{
     data_loader::DataLoader, data_loader_fast::FastDataLoader, transcript::extract_session_id,
 };
@@ -14,13 +14,23 @@ use std::time::Instant;
 pub struct CostSegment {
     enabled: bool,
     show_timing: bool,
+    use_fast_loader: bool,
 }
 
 impl CostSegment {
-    pub fn new(enabled: bool) -> Self {
+    pub fn new(config: &SegmentConfig) -> Self {
         Self {
-            enabled,
-            show_timing: std::env::var("CCLINE_SHOW_TIMING").is_ok(),
+            enabled: config.enabled,
+            show_timing: config
+                .options
+                .get("show_timing")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false),
+            use_fast_loader: config
+                .options
+                .get("fast_loader")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(true),
         }
     }
 
@@ -31,7 +41,7 @@ impl CostSegment {
 
         // 1. Load all project data
         let load_start = Instant::now();
-        let mut all_entries = if std::env::var("CCLINE_FAST_LOADER").is_ok() {
+        let mut all_entries = if self.use_fast_loader {
             // Use optimized fast loader
             let mut fast_loader = FastDataLoader::new();
             fast_loader.load_all_projects()
