@@ -13,6 +13,7 @@ use std::sync::{Arc, Mutex};
 /// Optimized data loader using parallel I/O and memory mapping
 pub struct FastDataLoader {
     project_dirs: Vec<PathBuf>,
+    thread_multiplier: Option<f64>,
 }
 
 /// Buffer type for file reading
@@ -35,7 +36,72 @@ impl FastDataLoader {
     pub fn new() -> Self {
         Self {
             project_dirs: Self::find_claude_dirs(),
+            thread_multiplier: None,
         }
+    }
+
+    /// Create a new loader with custom thread multiplier
+    pub fn with_thread_multiplier(multiplier: f64) -> Self {
+        Self {
+            project_dirs: Self::find_claude_dirs(),
+            thread_multiplier: Some(multiplier),
+        }
+    }
+
+    /// Calculate optimal thread count based on system capabilities and workload type
+    fn calculate_optimal_threads(&self) -> usize {
+        // Check if RAYON_NUM_THREADS is set (user override)
+        if let Ok(num) = std::env::var("RAYON_NUM_THREADS") {
+            if let Ok(n) = num.parse::<usize>() {
+                if n > 0 {
+                    eprintln!("Using RAYON_NUM_THREADS={}", n);
+                    return n;
+                }
+            }
+        }
+
+        // Get logical cores (includes hyperthreading)
+        let logical_cores = std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(4);
+
+        // Get physical cores using num_cpus crate
+        let physical_cores = num_cpus::get_physical();
+
+        // Detect if system has hyperthreading
+        let has_hyperthreading = logical_cores > physical_cores;
+
+        // For mixed I/O + CPU workload (file reading + JSON parsing)
+        // We want to balance between I/O parallelism and CPU efficiency
+        let base_multiplier = if has_hyperthreading {
+            // System has hyperthreading
+            // Use physical cores + some extra for I/O waiting
+            // But not full logical cores to avoid cache contention
+            1.5
+        } else {
+            // No hyperthreading detected
+            // Use physical cores directly (safer default)
+            1.0
+        };
+
+        // Apply custom multiplier if provided
+        let multiplier = self.thread_multiplier.unwrap_or(base_multiplier);
+        let optimal = (physical_cores as f64 * multiplier).round() as usize;
+
+        // Apply reasonable limits
+        let threads = optimal.clamp(2, 16);
+
+        // Log the decision for debugging
+        if std::env::var("CCLINE_DEBUG").is_ok() {
+            eprintln!("Thread pool configuration:");
+            eprintln!("  Physical cores: {}", physical_cores);
+            eprintln!("  Logical cores: {}", logical_cores);
+            eprintln!("  Hyperthreading: {}", has_hyperthreading);
+            eprintln!("  Multiplier: {}", multiplier);
+            eprintln!("  Optimal threads: {}", threads);
+        }
+
+        threads
     }
 
     /// Find all Claude data directories
@@ -108,15 +174,11 @@ impl FastDataLoader {
         let seen_hashes = Arc::new(Mutex::new(HashSet::<String>::with_capacity(10000)));
 
         // Configure thread pool for optimal I/O parallelism
-        // Use global thread pool configuration
+        // Use intelligent thread count based on system capabilities
+        let optimal_threads = self.calculate_optimal_threads();
+
         rayon::ThreadPoolBuilder::new()
-            .num_threads(std::cmp::min(
-                std::thread::available_parallelism()
-                    .map(|n| n.get())
-                    .unwrap_or(8)
-                    * 2,
-                16,
-            ))
+            .num_threads(optimal_threads)
             .build_global()
             .ok(); // Ignore if already configured
 

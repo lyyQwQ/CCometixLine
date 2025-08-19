@@ -315,6 +315,10 @@ fast_loader = true   # Use optimized parallel file loader (default: true)
 **Performance Options**:
 - `show_timing`: When enabled, displays timing breakdown for each processing step (L=Load, P=Pricing, C=Calculate, A=Analyze, B=Block)
 - `fast_loader`: Uses parallel I/O and memory-mapped files for 4x faster loading (recommended for large usage histories)
+- `thread_multiplier`: Adjusts the number of threads used for parallel file loading (default: auto-detect based on CPU cores)
+  - Systems with hyperthreading: defaults to 1.5x physical cores
+  - Systems without hyperthreading: defaults to 1.0x physical cores
+  - Range: 0.5-4.0 (final thread count is clamped between 2-16)
 
 ## Configuration
 

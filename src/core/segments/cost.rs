@@ -15,6 +15,7 @@ pub struct CostSegment {
     enabled: bool,
     show_timing: bool,
     use_fast_loader: bool,
+    thread_multiplier: Option<f64>,
 }
 
 impl CostSegment {
@@ -31,6 +32,10 @@ impl CostSegment {
                 .get("fast_loader")
                 .and_then(|v| v.as_bool())
                 .unwrap_or(true),
+            thread_multiplier: config
+                .options
+                .get("thread_multiplier")
+                .and_then(|v| v.as_f64()),
         }
     }
 
@@ -42,8 +47,12 @@ impl CostSegment {
         // 1. Load all project data
         let load_start = Instant::now();
         let mut all_entries = if self.use_fast_loader {
-            // Use optimized fast loader
-            let mut fast_loader = FastDataLoader::new();
+            // Use optimized fast loader with optional thread multiplier
+            let mut fast_loader = if let Some(multiplier) = self.thread_multiplier {
+                FastDataLoader::with_thread_multiplier(multiplier)
+            } else {
+                FastDataLoader::new()
+            };
             fast_loader.load_all_projects()
         } else {
             // Use original loader
