@@ -168,8 +168,8 @@ impl ModelPricing {
             }
         }
 
-        // Only show debug info if CCLINE_DEBUG is set
-        if std::env::var("CCLINE_DEBUG").is_ok() {
+        // Only show debug info if DEBUG_MODE is set
+        if *crate::utils::debug::DEBUG_MODE {
             eprintln!(
                 "LiteLLM: Fetched {} total models, {} Claude models, {} with valid pricing",
                 total_models, claude_models, valid_claude_models

@@ -1,5 +1,6 @@
 pub mod data_loader;
 pub mod data_loader_fast;
+pub mod debug;
 pub mod runtime;
 pub mod transcript;
 

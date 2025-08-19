@@ -54,7 +54,9 @@ impl FastDataLoader {
         if let Ok(num) = std::env::var("RAYON_NUM_THREADS") {
             if let Ok(n) = num.parse::<usize>() {
                 if n > 0 {
-                    eprintln!("Using RAYON_NUM_THREADS={}", n);
+                    if *crate::utils::debug::DEBUG_MODE {
+                        eprintln!("Using RAYON_NUM_THREADS={}", n);
+                    }
                     return n;
                 }
             }
@@ -92,7 +94,7 @@ impl FastDataLoader {
         let threads = optimal.clamp(2, 16);
 
         // Log the decision for debugging
-        if std::env::var("CCLINE_DEBUG").is_ok() {
+        if *crate::utils::debug::DEBUG_MODE {
             eprintln!("Thread pool configuration:");
             eprintln!("  Physical cores: {}", physical_cores);
             eprintln!("  Logical cores: {}", logical_cores);
