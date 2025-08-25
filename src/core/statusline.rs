@@ -479,7 +479,7 @@ pub fn collect_all_segments(
                 segment.collect(input)
             }
             crate::config::SegmentId::Usage => {
-                let segment = UsageSegment::new();
+                let segment = UsageSegment::new(&config.global);
                 segment.collect(input)
             }
             crate::config::SegmentId::Update => {

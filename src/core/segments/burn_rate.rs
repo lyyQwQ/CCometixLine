@@ -139,7 +139,11 @@ impl Segment for BurnRateSegment {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::{AnsiColor, ColorConfig, IconConfig, Model, TextStyleConfig, Workspace};
+    use crate::config::{
+        AnsiColor, ColorConfig, IconConfig, Model, SegmentConfig, SegmentId, TextStyleConfig,
+        Workspace,
+    };
+    use std::collections::HashMap;
 
     fn create_test_config(enabled: bool) -> SegmentConfig {
         SegmentConfig {
@@ -155,7 +159,11 @@ mod tests {
                 background: None,
             },
             styles: TextStyleConfig::default(),
-            options: HashMap::new(),
+            options: {
+                let mut opts = HashMap::new();
+                opts.insert("fast_loader".to_string(), serde_json::json!(true));
+                opts
+            },
         }
     }
 

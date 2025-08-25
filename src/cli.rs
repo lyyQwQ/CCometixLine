@@ -39,6 +39,10 @@ pub struct Cli {
     /// Show current block override status
     #[arg(long)]
     pub show_block_status: bool,
+
+    /// Set context window limit for usage calculation (in tokens)
+    #[arg(long = "context-limit", value_name = "TOKENS")]
+    pub context_limit: Option<u32>,
 }
 
 impl Cli {
