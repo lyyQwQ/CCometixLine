@@ -139,11 +139,37 @@ impl Segment for BurnRateSegment {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::{Model, Workspace};
+    use crate::config::{
+        ColorConfig, IconConfig, Model, SegmentConfig, SegmentId, TextStyleConfig, Workspace,
+    };
+    use std::collections::HashMap;
+
+    fn create_test_config(enabled: bool) -> SegmentConfig {
+        SegmentConfig {
+            id: SegmentId::BurnRate,
+            enabled,
+            icon: IconConfig {
+                plain: "🔥".to_string(),
+                nerd_font: "\u{f06d}".to_string(),
+            },
+            colors: ColorConfig {
+                icon: None,
+                text: None,
+                background: None,
+            },
+            styles: TextStyleConfig::default(),
+            options: {
+                let mut opts = HashMap::new();
+                opts.insert("fast_loader".to_string(), serde_json::json!(true));
+                opts
+            },
+        }
+    }
 
     #[test]
     fn test_burn_rate_segment_disabled() {
-        let segment = BurnRateSegment::new(false);
+        let config = create_test_config(false);
+        let segment = BurnRateSegment::new(&config);
         let input = InputData {
             model: Model {
                 display_name: "test-model".to_string(),
@@ -159,7 +185,8 @@ mod tests {
 
     #[test]
     fn test_burn_rate_segment_enabled() {
-        let segment = BurnRateSegment::new(true);
+        let config = create_test_config(true);
+        let segment = BurnRateSegment::new(&config);
         let input = InputData {
             model: Model {
                 display_name: "test-model".to_string(),
@@ -176,7 +203,8 @@ mod tests {
 
     #[test]
     fn test_indicator_selection() {
-        let segment = BurnRateSegment::new(true);
+        let config = create_test_config(true);
+        let segment = BurnRateSegment::new(&config);
 
         // Test high burn rate
         assert_eq!(segment.get_indicator(6000.0), "\u{ef76}"); // Fire

@@ -7,9 +7,39 @@ pub struct Config {
     pub style: StyleConfig,
     pub segments: Vec<SegmentConfig>,
     pub theme: String,
+    #[serde(default)]
+    pub global: GlobalConfig,
 }
 
 // Default implementation moved to ui/themes/presets.rs
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GlobalConfig {
+    #[serde(default = "default_context_limit")]
+    pub context_limit: u32,
+}
+
+impl Default for GlobalConfig {
+    fn default() -> Self {
+        Self {
+            context_limit: default_context_limit(),
+        }
+    }
+}
+
+impl GlobalConfig {
+    /// Validate the global configuration
+    pub fn validate(&self) -> Result<(), String> {
+        if self.context_limit == 0 {
+            return Err("Context limit must be greater than 0".to_string());
+        }
+        Ok(())
+    }
+}
+
+fn default_context_limit() -> u32 {
+    200000
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StyleConfig {
@@ -373,4 +403,48 @@ pub struct TranscriptEntry {
     pub request_id: Option<String>,
     #[serde(default)]
     pub timestamp: Option<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_global_config_default() {
+        let config = GlobalConfig::default();
+        assert_eq!(config.context_limit, 200000);
+    }
+
+    #[test]
+    fn test_global_config_validate_valid() {
+        let config = GlobalConfig {
+            context_limit: 100000,
+        };
+        assert!(config.validate().is_ok());
+    }
+
+    #[test]
+    fn test_global_config_validate_zero() {
+        let config = GlobalConfig { context_limit: 0 };
+        assert!(config.validate().is_err());
+        assert_eq!(
+            config.validate().unwrap_err(),
+            "Context limit must be greater than 0"
+        );
+    }
+
+    #[test]
+    fn test_global_config_validate_small_value() {
+        // Even 1 is valid, we only check for 0
+        let config = GlobalConfig { context_limit: 1 };
+        assert!(config.validate().is_ok());
+    }
+
+    #[test]
+    fn test_global_config_validate_large_value() {
+        let config = GlobalConfig {
+            context_limit: u32::MAX,
+        };
+        assert!(config.validate().is_ok());
+    }
 }

@@ -131,6 +131,7 @@ impl ThemePresets {
                 Self::burn_rate_segment(),
             ],
             theme: "default".to_string(),
+            global: crate::config::GlobalConfig::default(),
         }
     }
 
@@ -270,6 +271,7 @@ impl ThemePresets {
                 Self::minimal_burn_rate_segment(),
             ],
             theme: "minimal".to_string(),
+            global: crate::config::GlobalConfig::default(),
         }
     }
 
@@ -288,6 +290,7 @@ impl ThemePresets {
                 Self::gruvbox_burn_rate_segment(),
             ],
             theme: "gruvbox".to_string(),
+            global: crate::config::GlobalConfig::default(),
         }
     }
 
@@ -306,6 +309,7 @@ impl ThemePresets {
                 Self::nord_burn_rate_segment(),
             ],
             theme: "nord".to_string(),
+            global: crate::config::GlobalConfig::default(),
         }
     }
 
@@ -736,6 +740,7 @@ impl ThemePresets {
                 Self::powerline_dark_burn_rate_segment(),
             ],
             theme: "powerline-dark".to_string(),
+            global: crate::config::GlobalConfig::default(),
         }
     }
 
@@ -935,6 +940,7 @@ impl ThemePresets {
                 Self::powerline_light_burn_rate_segment(),
             ],
             theme: "powerline-light".to_string(),
+            global: crate::config::GlobalConfig::default(),
         }
     }
 
@@ -1122,6 +1128,7 @@ impl ThemePresets {
                 Self::powerline_rose_pine_burn_rate_segment(),
             ],
             theme: "powerline-rose-pine".to_string(),
+            global: crate::config::GlobalConfig::default(),
         }
     }
 
@@ -1325,6 +1332,7 @@ impl ThemePresets {
                 Self::powerline_tokyo_night_burn_rate_segment(),
             ],
             theme: "powerline-tokyo-night".to_string(),
+            global: crate::config::GlobalConfig::default(),
         }
     }
 

@@ -1,18 +1,19 @@
 use super::{Segment, SegmentData};
-use crate::config::{InputData, SegmentId, TranscriptEntry};
+use crate::config::{GlobalConfig, InputData, SegmentId, TranscriptEntry};
 use std::collections::HashMap;
 use std::fs;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
-const CONTEXT_LIMIT: u32 = 200000;
-
-#[derive(Default)]
-pub struct UsageSegment;
+pub struct UsageSegment {
+    context_limit: u32,
+}
 
 impl UsageSegment {
-    pub fn new() -> Self {
-        Self
+    pub fn new(global_config: &GlobalConfig) -> Self {
+        Self {
+            context_limit: global_config.context_limit,
+        }
     }
 }
 
@@ -24,7 +25,13 @@ impl Segment for UsageSegment {
         } else {
             parse_transcript_usage(&input.transcript_path)
         };
-        let context_used_rate = (context_used_token as f64 / CONTEXT_LIMIT as f64) * 100.0;
+
+        // Safe division to prevent panic on zero
+        let context_used_rate = if self.context_limit > 0 {
+            (context_used_token as f64 / self.context_limit as f64) * 100.0
+        } else {
+            0.0
+        };
 
         let percentage_display = if context_used_rate.fract() == 0.0 {
             format!("{:.0}%", context_used_rate)
@@ -46,7 +53,7 @@ impl Segment for UsageSegment {
         let mut metadata = HashMap::new();
         metadata.insert("tokens".to_string(), context_used_token.to_string());
         metadata.insert("percentage".to_string(), context_used_rate.to_string());
-        metadata.insert("limit".to_string(), CONTEXT_LIMIT.to_string());
+        metadata.insert("limit".to_string(), self.context_limit.to_string());
 
         Some(SegmentData {
             primary: format!("{} · {} tokens", percentage_display, tokens_display),

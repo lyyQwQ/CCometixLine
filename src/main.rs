@@ -63,6 +63,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
+    // Handle context limit setting
+    if let Some(context_limit) = cli.context_limit {
+        if context_limit == 0 {
+            eprintln!("Error: Context limit must be greater than 0");
+            std::process::exit(1);
+        }
+
+        let mut config = Config::load().unwrap_or_else(|_| Config::default());
+        config.global.context_limit = context_limit;
+
+        // Validate the configuration
+        if let Err(e) = config.global.validate() {
+            eprintln!("Error: {}", e);
+            std::process::exit(1);
+        }
+
+        config.save()?;
+        println!("Context limit set to {} tokens", context_limit);
+        return Ok(());
+    }
+
     // Load configuration
     let mut config = Config::load().unwrap_or_else(|_| Config::default());
 
