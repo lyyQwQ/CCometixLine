@@ -128,6 +128,12 @@ impl ConfigLoader {
                             .insert("fast_loader".to_string(), serde_json::json!(true));
                         needs_migration = true;
                     }
+                    if !segment.options.contains_key("cost_source") {
+                        segment
+                            .options
+                            .insert("cost_source".to_string(), serde_json::json!("auto"));
+                        needs_migration = true;
+                    }
                 }
                 crate::config::SegmentId::BurnRate => {
                     // Add missing options for BurnRate segment
@@ -258,6 +264,12 @@ impl Config {
                         segment
                             .options
                             .insert("fast_loader".to_string(), serde_json::json!(true));
+                        needs_migration = true;
+                    }
+                    if !segment.options.contains_key("cost_source") {
+                        segment
+                            .options
+                            .insert("cost_source".to_string(), serde_json::json!("auto"));
                         needs_migration = true;
                     }
                 }

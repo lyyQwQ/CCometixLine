@@ -139,11 +139,30 @@ impl Segment for BurnRateSegment {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::{Model, Workspace};
+    use crate::config::{AnsiColor, ColorConfig, IconConfig, Model, TextStyleConfig, Workspace};
+
+    fn create_test_config(enabled: bool) -> SegmentConfig {
+        SegmentConfig {
+            id: SegmentId::BurnRate,
+            enabled,
+            icon: IconConfig {
+                plain: "🔥".to_string(),
+                nerd_font: "\u{f1e2}".to_string(),
+            },
+            colors: ColorConfig {
+                icon: None,
+                text: None,
+                background: None,
+            },
+            styles: TextStyleConfig::default(),
+            options: HashMap::new(),
+        }
+    }
 
     #[test]
     fn test_burn_rate_segment_disabled() {
-        let segment = BurnRateSegment::new(false);
+        let config = create_test_config(false);
+        let segment = BurnRateSegment::new(&config);
         let input = InputData {
             model: Model {
                 display_name: "test-model".to_string(),
@@ -152,6 +171,8 @@ mod tests {
                 current_dir: "/test".to_string(),
             },
             transcript_path: "/test/transcript.jsonl".to_string(),
+            session_id: None,
+            cost: None,
         };
 
         assert!(segment.collect(&input).is_none());
@@ -159,7 +180,8 @@ mod tests {
 
     #[test]
     fn test_burn_rate_segment_enabled() {
-        let segment = BurnRateSegment::new(true);
+        let config = create_test_config(true);
+        let segment = BurnRateSegment::new(&config);
         let input = InputData {
             model: Model {
                 display_name: "test-model".to_string(),
@@ -168,6 +190,8 @@ mod tests {
                 current_dir: "/test".to_string(),
             },
             transcript_path: "/test/transcript.jsonl".to_string(),
+            session_id: None,
+            cost: None,
         };
 
         // Should return Some data when enabled
@@ -176,7 +200,8 @@ mod tests {
 
     #[test]
     fn test_indicator_selection() {
-        let segment = BurnRateSegment::new(true);
+        let config = create_test_config(true);
+        let segment = BurnRateSegment::new(&config);
 
         // Test high burn rate
         assert_eq!(segment.get_indicator(6000.0), "\u{ef76}"); // Fire

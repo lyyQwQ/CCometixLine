@@ -73,6 +73,17 @@ pub enum SegmentId {
     BurnRate,
 }
 
+// Cost source strategy for CostSegment
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum CostSource {
+    #[default]
+    Auto, // Prefer native cost from Claude Code, fallback to calculated
+    Native,     // Only use native cost from Claude Code
+    Calculated, // Always calculate from tokens
+    Both,       // Show both native and calculated costs
+}
+
 // Legacy compatibility structure
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SegmentsConfig {
@@ -106,6 +117,24 @@ pub struct InputData {
     pub model: Model,
     pub workspace: Workspace,
     pub transcript_path: String,
+    #[serde(default)]
+    pub session_id: Option<String>,
+    #[serde(default)]
+    pub cost: Option<SessionCost>,
+}
+
+// Session cost information from Claude Code
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SessionCost {
+    pub total_cost_usd: f64,
+    #[serde(default)]
+    pub total_duration_ms: Option<u64>,
+    #[serde(default)]
+    pub total_api_duration_ms: Option<u64>,
+    #[serde(default)]
+    pub total_lines_added: Option<u32>,
+    #[serde(default)]
+    pub total_lines_removed: Option<u32>,
 }
 
 // OpenAI-style nested token details
@@ -373,4 +402,6 @@ pub struct TranscriptEntry {
     pub request_id: Option<String>,
     #[serde(default)]
     pub timestamp: Option<String>,
+    #[serde(default, alias = "costUSD")]
+    pub cost_usd: Option<f64>,
 }

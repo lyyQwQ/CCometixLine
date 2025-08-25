@@ -387,6 +387,11 @@ impl ThemePresets {
     }
 
     fn minimal_cost_segment() -> SegmentConfig {
+        let mut options = HashMap::new();
+        options.insert("show_timing".to_string(), serde_json::json!(false));
+        options.insert("fast_loader".to_string(), serde_json::json!(true));
+        options.insert("cost_source".to_string(), serde_json::json!("auto"));
+
         SegmentConfig {
             id: SegmentId::Cost,
             enabled: false,
@@ -400,7 +405,7 @@ impl ThemePresets {
                 background: None,
             },
             styles: TextStyleConfig::default(),
-            options: HashMap::new(),
+            options,
         }
     }
 
@@ -500,6 +505,11 @@ impl ThemePresets {
     }
 
     fn gruvbox_cost_segment() -> SegmentConfig {
+        let mut options = HashMap::new();
+        options.insert("show_timing".to_string(), serde_json::json!(false));
+        options.insert("fast_loader".to_string(), serde_json::json!(true));
+        options.insert("cost_source".to_string(), serde_json::json!("auto"));
+
         SegmentConfig {
             id: SegmentId::Cost,
             enabled: false,
@@ -513,7 +523,7 @@ impl ThemePresets {
                 background: None,
             },
             styles: TextStyleConfig { text_bold: true },
-            options: HashMap::new(),
+            options,
         }
     }
 
@@ -661,6 +671,11 @@ impl ThemePresets {
     }
 
     fn nord_cost_segment() -> SegmentConfig {
+        let mut options = HashMap::new();
+        options.insert("show_timing".to_string(), serde_json::json!(false));
+        options.insert("fast_loader".to_string(), serde_json::json!(true));
+        options.insert("cost_source".to_string(), serde_json::json!("auto"));
+
         SegmentConfig {
             id: SegmentId::Cost,
             enabled: false,
@@ -686,7 +701,7 @@ impl ThemePresets {
                 }),
             },
             styles: TextStyleConfig::default(),
-            options: HashMap::new(),
+            options,
         }
     }
 

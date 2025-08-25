@@ -4,7 +4,7 @@ use crate::billing::{
     calculator::{calculate_daily_total, calculate_session_cost, format_remaining_time},
     ModelPricing,
 };
-use crate::config::{InputData, SegmentConfig, SegmentId};
+use crate::config::{CostSource, InputData, SegmentConfig, SegmentId};
 use crate::utils::{
     data_loader::DataLoader, data_loader_fast::FastDataLoader, transcript::extract_session_id,
 };
@@ -16,10 +16,24 @@ pub struct CostSegment {
     show_timing: bool,
     use_fast_loader: bool,
     thread_multiplier: Option<f64>,
+    cost_source: CostSource,
 }
 
 impl CostSegment {
     pub fn new(config: &SegmentConfig) -> Self {
+        let cost_source = config
+            .options
+            .get("cost_source")
+            .and_then(|v| v.as_str())
+            .and_then(|s| match s {
+                "auto" => Some(CostSource::Auto),
+                "native" => Some(CostSource::Native),
+                "calculated" => Some(CostSource::Calculated),
+                "both" => Some(CostSource::Both),
+                _ => None,
+            })
+            .unwrap_or_default();
+
         Self {
             enabled: config.enabled,
             show_timing: config
@@ -36,6 +50,7 @@ impl CostSegment {
                 .options
                 .get("thread_multiplier")
                 .and_then(|v| v.as_f64()),
+            cost_source,
         }
     }
 
@@ -44,7 +59,10 @@ impl CostSegment {
         let start = Instant::now();
         let mut timings = Vec::new();
 
-        // 1. Load all project data
+        // Get native cost if available
+        let native_cost = input.cost.as_ref().map(|c| c.total_cost_usd);
+
+        // 1. Always load all project data
         let load_start = Instant::now();
         let mut all_entries = if self.use_fast_loader {
             // Use optimized fast loader with optional thread multiplier
@@ -80,9 +98,18 @@ impl CostSegment {
         let analyze_start = Instant::now();
         let transcript_path = std::path::Path::new(&input.transcript_path);
         let session_id = extract_session_id(transcript_path);
-        let session_cost = calculate_session_cost(&all_entries, &session_id, &pricing_map);
+        let calculated_session_cost =
+            calculate_session_cost(&all_entries, &session_id, &pricing_map);
         let daily_total = calculate_daily_total(&all_entries, &pricing_map);
         timings.push(("A", analyze_start.elapsed().as_millis()));
+
+        // Determine which session cost to use based on strategy
+        let session_cost = match self.cost_source {
+            CostSource::Auto => native_cost.unwrap_or(calculated_session_cost),
+            CostSource::Native => native_cost.unwrap_or(0.0),
+            CostSource::Calculated => calculated_session_cost,
+            CostSource::Both => calculated_session_cost, // Will show both in display
+        };
 
         // 5. Calculate dynamic blocks with override support
         let block_start = Instant::now();
@@ -103,8 +130,18 @@ impl CostSegment {
             );
         }
 
-        // Format primary and secondary text
-        let primary = format!("${:.2} session", session_cost);
+        // Format primary and secondary text based on cost source
+        let primary = match self.cost_source {
+            CostSource::Both if native_cost.is_some() => {
+                format!(
+                    "${:.2} native / ${:.2} calc",
+                    native_cost.unwrap(),
+                    calculated_session_cost
+                )
+            }
+            _ => format!("${:.2} session", session_cost),
+        };
+
         let secondary = if let Some(block) = active_block {
             format!(
                 "${:.2} today · ${:.2} block ({})",
