@@ -140,8 +140,7 @@ impl Segment for BurnRateSegment {
 mod tests {
     use super::*;
     use crate::config::{
-        AnsiColor, ColorConfig, IconConfig, Model, SegmentConfig, SegmentId, TextStyleConfig,
-        Workspace,
+        ColorConfig, IconConfig, Model, SegmentConfig, SegmentId, TextStyleConfig, Workspace,
     };
     use std::collections::HashMap;
 
